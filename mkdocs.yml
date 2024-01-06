@@ -1,0 +1,16 @@
+site_name: "taskfiles"
+theme:
+  name: material
+docs_dir: docs/
+repo_name: 'nolte/taskfiles'
+repo_url: 'https://github.com/nolte/taskfiles'
+plugins:
+  - include-markdown
+markdown_extensions:
+  - pymdownx.inlinehilite:
+  - pymdownx.superfences:
+  - pymdownx.highlight:
+  - toc:
+      permalink: True
+extra_css:
+  - css/overwrite.css
