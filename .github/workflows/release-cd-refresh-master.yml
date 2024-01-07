@@ -8,6 +8,6 @@ jobs:
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
     permissions:
-      contents: write    
+      contents: write
     with:
       target_branch: main
