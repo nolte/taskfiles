@@ -1,0 +1,26 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  PYTHON_VENV_DIR: "{{.PYTHON_VENVS_BASEDIR}}/development"
+
+tasks:
+  install:
+    desc: install pre-commit into current project
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - |
+        bash -c "
+        source {{.PYTHON_VENV_DIR}}/bin/activate && \
+            pre-commit install
+        "
+  start:
+    desc: run pre-commit with all files
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - |
+        bash -c "
+        source {{.PYTHON_VENV_DIR}}/bin/activate && \
+            pre-commit run --all-files
+        "
