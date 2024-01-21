@@ -6,10 +6,18 @@
 
 <!--intro-start-->
 Collection of reusable [Taskfile](https://github.com/go-task/task).
+
+* [mkdocs](), for local usage
+* [kind](), for control local development cluster
+* [pre-commit](), for local linting
+* [k8s](), for base commands useful for bootstrapping
+
+
 <!--intro-end-->
 
 ## Usage
 
+<!--usage-start-->
 Include this task collection into your [Taskfile](https://taskfile.dev/experiments/remote-taskfiles/)
 
 ```yaml
@@ -20,8 +28,10 @@ includes:
     ...
 ...
 ```
-
+<!--usage-end-->
 
 ## Links
 
+<!--links-start-->
 * [nolte/workstation](https://github.com/nolte/workstation), for configure our Workstation.
+<!--links-end-->

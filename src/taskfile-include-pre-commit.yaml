@@ -3,6 +3,7 @@
 version: '3'
 
 vars:
+  PYTHON_VENVS_BASEDIR: ~/.venvs/
   PYTHON_VENV_DIR: "{{.PYTHON_VENVS_BASEDIR}}/development"
 
 tasks:
