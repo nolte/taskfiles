@@ -7,7 +7,7 @@
 <!--intro-start-->
 Collection of reusable [Taskfile](https://github.com/go-task/task).
 
-* [mkdocs](), for local usage
+* [mkdocs](), for local usage and generate the docs
 * [kind](), for control local development cluster
 * [pre-commit](), for local linting
 * [k8s](), for base commands useful for bootstrapping
@@ -23,9 +23,13 @@ Include this task collection into your [Taskfile](https://taskfile.dev/experimen
 ```yaml
 version: '3'
 
+vars:
+  TASK_COLLECTION_BASE: https://raw.githubusercontent.com/nolte/taskfiles/feature/k8s-tasks/src
+
 includes:
-    mkdocs: https://raw.githubusercontent.com/nolte/taskfiles/develop/src/taskfile-include-mkdocs.yaml
-    ...
+  mkdocs: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
+  pre-commit: "{{.TASK_COLLECTION_BASE}}/taskfile-include-pre-commit.yaml"
+  ...
 ...
 ```
 <!--usage-end-->
