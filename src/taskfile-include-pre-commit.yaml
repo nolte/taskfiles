@@ -4,7 +4,7 @@ version: '3'
 
 vars:
   PYTHON_VENVS_BASEDIR: ~/.venvs/
-  PYTHON_VENV_DIR: "{{.PYTHON_VENVS_BASEDIR}}/development"
+  PYTHON_VENV_DIR_DEVELOPMENT: "{{.PYTHON_VENVS_BASEDIR}}/development"
 
 tasks:
   install:
@@ -13,7 +13,7 @@ tasks:
     cmds:
       - |
         bash -c "
-        source {{.PYTHON_VENV_DIR}}/bin/activate && \
+        source {{.PYTHON_VENV_DIR_DEVELOPMENT}}/bin/activate && \
             pre-commit install
         "
   start:
@@ -22,6 +22,6 @@ tasks:
     cmds:
       - |
         bash -c "
-        source {{.PYTHON_VENV_DIR}}/bin/activate && \
+        source {{.PYTHON_VENV_DIR_DEVELOPMENT}}/bin/activate && \
             pre-commit run --all-files
         "
