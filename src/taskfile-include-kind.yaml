@@ -2,13 +2,16 @@
 
 version: '3'
 
+vars:
+  KIND_CREATE_EXTRA_ARGS: ""
+
 tasks:
   start:
     desc: kind create cluster
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
       - |
-        kind create cluster
+        kind create {{.KIND_CREATE_EXTRA_ARGS}} cluster
 
   destroy:
     desc: kind delete cluster
