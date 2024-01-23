@@ -1,0 +1,23 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  ARGOCD_EXTRA_ARGS: ""
+
+tasks:
+  bootstrap:
+    desc: bootstrap minimal set of k8s services
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+    - task: install-argocd
+
+  install-argocd:
+    desc: Install ArgoCD into Cluster
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - |
+        kubectl create namespace argocd | true
+        helm repo add argo https://argoproj.github.io/argo-helm
+        helm repo update
+        helm template argocd argo/argo-cd {{.ARGOCD_EXTRA_ARGS}} --namespace=argocd | kubectl apply -n argocd -f -
