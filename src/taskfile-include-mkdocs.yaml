@@ -5,6 +5,7 @@ version: '3'
 vars:
   PYTHON_VENVS_BASEDIR: ~/.venvs/
   PYTHON_VENV_DIR_DOCS: "{{.PYTHON_VENVS_BASEDIR}}/docs"
+  MKDOCS_PORT: 8001
 
 tasks:
   start:
@@ -14,5 +15,5 @@ tasks:
       - |
         bash -c "
         source {{.PYTHON_VENV_DIR_DOCS}}/bin/activate && \
-            mkdocs serve -a localhost:8001
+            mkdocs serve -a localhost:{{.MKDOCS_PORT}}
         "
