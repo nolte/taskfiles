@@ -34,7 +34,7 @@ includes:
 ### Prerequisites
 
 * [go-task](https://taskfile.dev) CLI
-* Python virtualenvs at `~/.venvs/docs` (for `mkdocs:*` tasks) and `~/.venvs/development` (for `pre-commit:*` tasks), as provisioned by [nolte/workstation](https://github.com/nolte/workstation).
+* Python virtual environments at `~/.venvs/docs` (for `mkdocs:*` tasks) and `~/.venvs/development` (for `pre-commit:*` tasks), as provisioned by [nolte/workstation](https://github.com/nolte/workstation).
 <!--usage-end-->
 
 ## Links
