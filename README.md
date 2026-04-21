@@ -5,12 +5,12 @@
 ---
 
 <!--intro-start-->
-Collection of reusable [Taskfiles](https://github.com/go-task/task).
+Collection of reusable [Taskfile](https://github.com/go-task/task) includes.
 
-* [mkdocs](./src/taskfile-include-mkdocs.yaml) — local preview and doc generation
-* [kind](./src/taskfile-include-kind.yaml) — control a local development cluster
-* [pre-commit](./src/taskfile-include-pre-commit.yaml) — local linting
-* [k8s](./src/taskfile-include-k8s.yaml) — base commands for bootstrapping
+* [mkdocs](./src/taskfile-include-mkdocs.yaml): local preview and doc generation
+* [kind](./src/taskfile-include-kind.yaml): control a local development cluster
+* [pre-commit](./src/taskfile-include-pre-commit.yaml): local linting
+* [k8s](./src/taskfile-include-k8s.yaml): base commands for bootstrapping
 <!--intro-end-->
 
 ## Usage
@@ -40,5 +40,5 @@ includes:
 ## Links
 
 <!--links-start-->
-* [nolte/workstation](https://github.com/nolte/workstation) — workstation configuration.
+* [nolte/workstation](https://github.com/nolte/workstation): workstation configuration.
 <!--links-end-->
