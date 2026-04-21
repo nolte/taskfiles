@@ -5,37 +5,40 @@
 ---
 
 <!--intro-start-->
-Collection of reusable [Taskfile](https://github.com/go-task/task).
+Collection of reusable [Taskfile](https://github.com/go-task/task) includes.
 
-* [mkdocs](), for local usage and generate the docs
-* [kind](), for control local development cluster
-* [pre-commit](), for local linting
-* [k8s](), for base commands useful for bootstrapping
-
-
+* [mkdocs](./src/taskfile-include-mkdocs.yaml): local preview and doc generation
+* [kind](./src/taskfile-include-kind.yaml): control a local development cluster
+* [pre-commit](./src/taskfile-include-pre-commit.yaml): local linting
+* [k8s](./src/taskfile-include-k8s.yaml): base commands for bootstrapping
 <!--intro-end-->
 
 ## Usage
 
 <!--usage-start-->
-Include this task collection into your [Taskfile](https://taskfile.dev/experiments/remote-taskfiles/)
+Include this task collection in your [Taskfile](https://taskfile.dev/experiments/remote-taskfiles/):
 
 ```yaml
 version: '3'
 
 vars:
-  TASK_COLLECTION_BASE: https://raw.githubusercontent.com/nolte/taskfiles/feature/k8s-tasks/src
+  TASK_COLLECTION_BASE: https://raw.githubusercontent.com/nolte/taskfiles/main/src
 
 includes:
   mkdocs: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
+  kind: "{{.TASK_COLLECTION_BASE}}/taskfile-include-kind.yaml"
   pre-commit: "{{.TASK_COLLECTION_BASE}}/taskfile-include-pre-commit.yaml"
-  ...
-...
+  k8s: "{{.TASK_COLLECTION_BASE}}/taskfile-include-k8s.yaml"
 ```
+
+### Prerequisites
+
+* [go-task](https://taskfile.dev) CLI
+* Python virtual environments at `~/.venvs/docs` (for `mkdocs:*` tasks) and `~/.venvs/development` (for `pre-commit:*` tasks), as provisioned by [nolte/workstation](https://github.com/nolte/workstation).
 <!--usage-end-->
 
 ## Links
 
 <!--links-start-->
-* [nolte/workstation](https://github.com/nolte/workstation), for configure our Workstation.
+* [nolte/workstation](https://github.com/nolte/workstation): workstation configuration.
 <!--links-end-->
