@@ -7,10 +7,12 @@
 <!--intro-start-->
 Collection of reusable [Taskfile](https://github.com/go-task/task) includes.
 
-* [mkdocs](./src/taskfile-include-mkdocs.yaml): local preview and doc generation
-* [kind](./src/taskfile-include-kind.yaml): control a local development cluster
-* [pre-commit](./src/taskfile-include-pre-commit.yaml): local linting
-* [k8s](./src/taskfile-include-k8s.yaml): base commands for bootstrapping
+| Module | Tasks | Key variables |
+|--------|-------|---------------|
+| [mkdocs](./src/taskfile-include-mkdocs.yaml) | `start` | `MKDOCS_PORT` |
+| [kind](./src/taskfile-include-kind.yaml) | `start`, `destroy`, `recreate` | `KIND_CREATE_EXTRA_ARGS` |
+| [pre-commit](./src/taskfile-include-pre-commit.yaml) | `install`, `start` | — |
+| [k8s](./src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |
 <!--intro-end-->
 
 ## Usage
