@@ -7,7 +7,7 @@ Run [pre-commit](https://pre-commit.com/) hooks from a pre-provisioned Python vi
 | Task | Description |
 |------|-------------|
 | `pre-commit:install` | Install the hooks into the current project (`pre-commit install`) |
-| `pre-commit:start` | Run every hook against every file (`pre-commit run --all-files`) |
+| `pre-commit:start` | Run every hook over every file (`pre-commit run --all-files`) |
 
 ## Variables
 
