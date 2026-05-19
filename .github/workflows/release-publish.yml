@@ -1,0 +1,13 @@
+---
+name: Release Publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish_release:
+    uses: nolte/gh-plumbing/.github/workflows/reusable-release-publish.yml@v1.1.12
+    secrets:
+      token: ${{ secrets.GITHUB_TOKEN }}
+    permissions:
+      contents: write

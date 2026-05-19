@@ -3,9 +3,20 @@ version: '3'
 
 includes:
   mkdocs: ./src/taskfile-include-mkdocs.yaml
+  pre-commit: ./src/taskfile-include-pre-commit.yaml
 
 tasks:
   default:
     cmds:
-    - task -l
+      - task -l
     silent: true
+
+  lint:
+    desc: Run all pre-commit hooks
+    cmds:
+      - task: pre-commit:start
+
+  docs:
+    desc: Serve the mkdocs site locally
+    cmds:
+      - task: mkdocs:start

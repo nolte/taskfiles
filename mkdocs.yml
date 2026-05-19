@@ -4,6 +4,13 @@ theme:
 docs_dir: docs/
 repo_name: 'nolte/taskfiles'
 repo_url: 'https://github.com/nolte/taskfiles'
+nav:
+  - Overview: index.md
+  - Modules:
+      - mkdocs: modules/mkdocs.md
+      - kind: modules/kind.md
+      - pre-commit: modules/pre-commit.md
+      - k8s: modules/k8s.md
 plugins:
   - include-markdown
 markdown_extensions:
