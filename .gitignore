@@ -2,3 +2,5 @@ site
 
 .github/styles/*
 !.github/styles/.keep
+!.github/styles/config/
+!.github/styles/config/**
