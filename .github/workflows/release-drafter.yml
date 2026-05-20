@@ -6,10 +6,14 @@ on:
     # branches to consider in the event; optional, defaults to all
     branches:
       - develop
+  # Manual fallback when push-triggered runs miss commits — for example
+  # because an automerge action used GITHUB_TOKEN, which doesn't fire
+  # downstream workflows.
+  workflow_dispatch:
 
 jobs:
   update_release_draft:
-    uses: nolte/gh-plumbing/.github/workflows/reuseable-release-drafter.yml@v1.0.24
+    uses: nolte/gh-plumbing/.github/workflows/reusable-release-drafter.yml@v1.1.18
     permissions:
       # write permission is required to create a github release
       contents: write

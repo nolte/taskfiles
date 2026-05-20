@@ -4,13 +4,51 @@ theme:
 docs_dir: docs/
 repo_name: 'nolte/taskfiles'
 repo_url: 'https://github.com/nolte/taskfiles'
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started/index.md
+  - Guides:
+      - Overview: guides/index.md
+      - Contributing: guides/contributing.md
+  - References:
+      - Overview: references/index.md
+      - Modules:
+          - mkdocs: references/modules/mkdocs.md
+          - kind: references/modules/kind.md
+          - pre-commit: references/modules/pre-commit.md
+          - k8s: references/modules/k8s.md
+      - Governance and specs: references/governance.md
+
 plugins:
+  - search
+  - i18n:
+      docs_structure: folder
+      languages:
+        - locale: en
+          default: true
+          name: English
+          build: true
+        - locale: de
+          name: Deutsch
+          build: true
+          nav_translations:
+            Home: Startseite
+            Getting Started: Erste Schritte
+            Guides: Anleitungen
+            Overview: Übersicht
+            References: Referenzen
+            Modules: Module
+            Contributing: Mitwirken
+            Governance and specs: Governance und Specs
   - include-markdown
+
 markdown_extensions:
   - pymdownx.inlinehilite:
   - pymdownx.superfences:
   - pymdownx.highlight:
   - toc:
       permalink: True
+
 extra_css:
   - css/overwrite.css
