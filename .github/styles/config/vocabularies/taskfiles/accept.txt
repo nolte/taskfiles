@@ -2,3 +2,11 @@ k8s
 kind
 pre-commit
 taskfiles
+venv
+venvs
+automerge
+namespace
+repo
+config
+kubeconfig
+nolte
