@@ -30,7 +30,7 @@ layout each time.
 ## Common contract
 
 These rules hold for every module in the collection. Module pages don't
-repeat them; they reference this section instead.
+repeat them. Instead, they reference this section.
 
 ### USER_WORKING_DIR invariant
 
@@ -40,7 +40,7 @@ include file itself. Concretely:
 
 - `task mkdocs:start` serves the `mkdocs.yml` next to the consumer's
   `Taskfile.yml`, not one inside this repository.
-- `task pre-commit:start` runs against the consumer's
+- `task pre-commit:start` runs on the consumer's
   `.pre-commit-config.yaml`.
 - `task kind:start` writes the cluster kubeconfig wherever `kind` writes it
   by default for the current user.
@@ -60,7 +60,7 @@ where `<ref>` is one of:
   time a maintainer pushes to `main`.
 - A released tag, for example `v1.2.0`: recommended for day-to-day use.
   Drift is impossible until the consumer bumps the tag.
-- A branch name: useful for testing an in-flight change against a real
+- A branch name: useful for testing an in-flight change with a real
   consumer; not appropriate for shared environments.
 
 Because every module path shares the same `TASK_COLLECTION_BASE`, Renovate
@@ -93,8 +93,8 @@ default value and the purpose of the variable.
 ### Externally provisioned virtual environments
 
 Python-backed modules (`mkdocs`, `pre-commit`) activate pre-provisioned
-virtual environments; they don't install dependencies on the fly. The
-defaults are `~/.venvs/docs` and `~/.venvs/development`; both come from the
+virtual environments. They don't install dependencies on the fly. The
+defaults are `~/.venvs/docs` and `~/.venvs/development`. Both come from the
 [`nolte/workstation`](https://github.com/nolte/workstation) playbook. Move
 the base path with `PYTHON_VENVS_BASEDIR` when the playbook isn't in use.
 

@@ -11,7 +11,7 @@ Do not add audiences without first declaring the bounded context below.
 `nolte/taskfiles` is a curated collection of reusable Taskfile include modules
 (one YAML file per topic area under `src/`), consumed by downstream projects
 via Taskfile's `remote-taskfiles` experiment through a `TASK_COLLECTION_BASE`
-URL pointer. The product is the YAML files themselves—no build artifact, no
+pointer. The product is the YAML files themselves—no build artifact, no
 runtime code, no distributable library. The contract covers the public task
 signatures per module, the `vars:` defaults, and the `dir: '{{.USER_WORKING_DIR}}'`
 invariant.
@@ -29,26 +29,26 @@ invariant.
 - The wrapped tools themselves (`kind`, `mkdocs`, `kubectl`, `helm`,
   `pre-commit`, ArgoCD)
 - Pre-provisioned Python virtual environments (`~/.venvs/docs`,
-  `~/.venvs/development`), which are managed by `nolte/workstation`
+  `~/.venvs/development`), which `nolte/workstation` provisions
 - Each consumer project's own Taskfile
-- Each consumer's choice of `TASK_COLLECTION_BASE` URL and pin strategy
+- Each consumer's choice of `TASK_COLLECTION_BASE` endpoint and pin strategy
 
 ## Audiences
 
 Each entry: label, relationship category, interaction surface, expectation,
 documentation `track` (`user-docs` or `developer-docs` per
 spec/project/docs-audience-tracks/), open questions, `confirmed` or `assumed`,
-criticality (primary / secondary / peripheral). A whole category is marked
-`none — <reason>` when it doesn't apply.
+criticality (primary / secondary / peripheral). Use `none — <reason>` for a
+whole category that doesn't apply.
 
-This repository serves only `developer-docs` audiences; no end-user
-documentation track applies, because the product is consumed exclusively by
-other engineers wiring Taskfile includes into their own projects.
+This repository serves only `developer-docs` audiences. No end-user
+documentation track applies, because only other engineers wiring Taskfile
+includes into their own projects ever consume the product.
 
 ### Direct consumers
 
 - **Taskfile-consumer project**—_category_: direct-consumer ·
-  _surface_: `remote-taskfiles` include via `TASK_COLLECTION_BASE` URL plus the
+  _surface_: `remote-taskfiles` include via `TASK_COLLECTION_BASE` plus the
   documented `vars:` override points ·
   _expects_: stable per-module task signatures (`mkdocs:start`,
   `kind:start|destroy|recreate`, `pre-commit:install|start`,
@@ -59,7 +59,7 @@ other engineers wiring Taskfile includes into their own projects.
   _status_: `assumed` ·
   _criticality_: primary
   - Open questions: concrete identity of the consumers; how many repositories
-    pin against this collection; which pin strategy (`@main`, `@<tag>`, branch)
+    pin to this collection; which pin strategy (`@main`, `@<tag>`, branch)
     they use.
 
 ### Operators
@@ -73,7 +73,7 @@ other engineers wiring Taskfile includes into their own projects.
   _track_: `developer-docs` ·
   _status_: `assumed` ·
   _criticality_: primary
-  - Open questions: how broadly the "operator" framing extends here; whether
+  - Open questions: how far the "operator" framing extends here; whether
     consumers ever wrap these tasks in a non-trivial automation harness.
 
 - **Consumer-side CI/CD pipeline**—_category_: operator ·
@@ -101,7 +101,7 @@ other engineers wiring Taskfile includes into their own projects.
   - Open questions: who, besides the repo owner, contributes today; whether
     a separate `CONTRIBUTING.md` should split off from `CLAUDE.md`.
 
-- **Documentation author**—_category_: contributor ·
+- **Documentation writer**—_category_: contributor ·
   _surface_: `README.md`, `docs/modules/*.md`, `mkdocs.yml`, the local Vale
   vocabulary under `.github/styles/config/vocabularies/taskfiles/` ·
   _expects_: stable documentation architecture (per-module pages with
@@ -110,7 +110,7 @@ other engineers wiring Taskfile includes into their own projects.
   _track_: `developer-docs` ·
   _status_: `assumed` ·
   _criticality_: secondary
-  - Open questions: whether documentation authors and module maintainers are
+  - Open questions: whether documentation writers and module maintainers are
     the same individuals in practice.
 
 ### Governing parties
@@ -124,9 +124,9 @@ other engineers wiring Taskfile includes into their own projects.
   tag-pinned reusable workflows, Probot Settings, Renovate, mkdocs structure,
   Vale through shared vocabularies) ·
   _track_: `developer-docs` ·
-  _status_: `confirmed` (the specs ship in `nolte/claude-shared` and were
-  applied against this repository multiple times in the audit and apply
-  passes that produced this artifact) ·
+  _status_: `confirmed` (the specs ship in `nolte/claude-shared` and the
+  audit / apply passes that produced this artifact applied them to this
+  repository several times) ·
   _criticality_: primary
   - Open questions: none.
 
@@ -150,26 +150,25 @@ there are no end users behind a service that this repository operates.`
 ## Open questions (cross-cutting)
 
 - Which downstream `nolte/*` repositories actually consume this collection
-  today, and at which pin? Without this list the Direct-consumer entry
-  can't be promoted from `assumed` to `confirmed`.
+  today, and at which pin? Without this list, the Direct-consumer entry
+  stays at `assumed`.
 - Should the contribution conventions currently embedded in `CLAUDE.md`
-  (USER_WORKING_DIR invariant, externally-provisioned venvs, `vars:`
-  defaults) be split into a stand-alone `CONTRIBUTING.md` so the
-  contributor audience has a single canonical entry point?
-- Should an indirect-audience entry be revived later for a threat-modeling
-  pass? The `none` decision here is documentation-driven, not security-
-  driven.
+  (USER_WORKING_DIR invariant, externally provisioned venvs, `vars:`
+  defaults) move into a stand-alone `CONTRIBUTING.md` so the contributor
+  audience has a single canonical entry point?
+- Does a later threat-modeling pass warrant an indirect-audience entry?
+  The `none` decision here is documentation-driven, not security-driven.
 
 ## Revisit triggers
 
-- A new module `src/taskfile-include-<area>.yaml` is added.
-- An existing task is renamed, removed, or gets a breaking-change `vars:`
-  rename.
-- The `TASK_COLLECTION_BASE` URL scheme changes (for example a move away
-  from the `remote-taskfiles` experiment).
+- A new module `src/taskfile-include-<area>.yaml` lands.
+- Someone renames or removes an existing task, or ships a breaking-change
+  `vars:` rename.
+- The `TASK_COLLECTION_BASE` endpoint scheme changes (for example a move
+  away from the `remote-taskfiles` experiment).
 - A concrete consumer reports a regression—that consumer becomes a
   candidate for promoting the Direct-consumer entry to `confirmed`.
 - The portfolio adds a new spec under `spec/project/` that this repository
-  is expected to satisfy (audience changes from "governing parties").
-- A future threat-model or SLA spec consumes this audience list and
-  surfaces a previously invisible indirect audience.
+  must satisfy (audience changes from "governing parties").
+- A future threat-model or service-level-agreement spec consumes this
+  audience list and surfaces a previously invisible indirect audience.

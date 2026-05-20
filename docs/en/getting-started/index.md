@@ -1,5 +1,5 @@
 ---
-title: Getting Started
+title: Getting started
 audience:
   - taskfile-consumer-project
   - consumer-developer
@@ -8,10 +8,10 @@ track: developer-docs
 last_updated: 2026-05-20
 ---
 
-# Getting Started
+# Getting started
 
 This tutorial walks a consumer project through the first successful use of one
-of the modules. By the end, `task pre-commit:start` runs against the consumer
+of the modules. By the end, `task pre-commit:start` runs in the consumer
 repository, sourced from a single remote include.
 
 ## Prerequisites
@@ -69,7 +69,7 @@ The task activates `~/.venvs/development` and runs
 `pre-commit run --all-files` inside the consumer's working directory. On
 success, `pre-commit` prints one line per hook with either `Passed`,
 `Skipped`, or `Failed`. A failing hook points at the consumer's prose or
-code; it isn't a problem with the include.
+code. It isn't a problem with the include.
 
 ## 4. Pin to a released tag
 

@@ -12,7 +12,8 @@ last_updated: 2026-05-20
 
 This page is the entry point for anyone who needs to verify that the
 repository still satisfies the portfolio conventions. It doesn't duplicate
-the upstream specs; it lists the entry points and the current pin state.
+the upstream specs. Instead, it lists the entry points and the current pin
+state.
 
 ## Portfolio conventions
 
@@ -51,7 +52,7 @@ because mixing tags between workflows is a known source of drift.
 
 ## Dependency governance
 
-Renovate runs against this repository through
+Renovate runs on this repository through
 [`renovate.json5`](https://github.com/nolte/taskfiles/blob/main/renovate.json5),
 which extends `nolte/gh-plumbing//renovate-configs/common` at a pinned tag.
 Concrete expectations:
@@ -82,5 +83,5 @@ narrative sense.
 
 `.github/settings.yml` ships the repository settings (branch protection,
 labels, automerge configuration) through the Probot Settings app. Treat
-it as the source of truth; manual changes in the GitHub UI drift away from
+it as the source of truth. Manual changes in the GitHub UI drift away from
 the spec.

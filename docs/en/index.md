@@ -29,7 +29,7 @@ This site serves three reader clusters. Pick the one that matches the task at ha
   specs (project structure, release automation, Renovate, Vale). Read
   [References → Governance and specs](references/governance.md).
 
-The structure above reflects the audience analysis recorded in
+The structure shown here reflects the audience analysis recorded in
 [`AUDIENCES.md`](https://github.com/nolte/taskfiles/blob/main/AUDIENCES.md).
 Every page declares its `audience`, `content_mode`, and `track` in its
 front matter so the link between an audience and the content it gets stays

@@ -22,7 +22,7 @@ already knows the basics from
   conventions, local checks, and the pull-request flow.
 
 The list is intentionally short. The repository is small, and most
-contributor questions resolve against [`CLAUDE.md`](https://github.com/nolte/taskfiles/blob/main/CLAUDE.md)
+contributor questions resolve via [`CLAUDE.md`](https://github.com/nolte/taskfiles/blob/main/CLAUDE.md)
 or the [References](../references/index.md) section.
 
 ## Sources
