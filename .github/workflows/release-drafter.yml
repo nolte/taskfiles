@@ -6,6 +6,10 @@ on:
     # branches to consider in the event; optional, defaults to all
     branches:
       - develop
+  # Manual fallback when push-triggered runs miss commits — for example
+  # because an automerge action used GITHUB_TOKEN, which doesn't fire
+  # downstream workflows.
+  workflow_dispatch:
 
 jobs:
   update_release_draft:
