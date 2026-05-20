@@ -9,10 +9,10 @@ A curated collection of reusable [Taskfile](https://github.com/go-task/task) inc
 
 | Module | Tasks | Key variables |
 |--------|-------|---------------|
-| [mkdocs](./src/taskfile-include-mkdocs.yaml) | `start` | `MKDOCS_PORT` |
-| [kind](./src/taskfile-include-kind.yaml) | `start`, `destroy`, `recreate` | `KIND_CREATE_EXTRA_ARGS` |
-| [pre-commit](./src/taskfile-include-pre-commit.yaml) | `install`, `start` | `PYTHON_VENVS_BASEDIR` |
-| [k8s](./src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |
+| [mkdocs](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-mkdocs.yaml) | `start` | `MKDOCS_PORT` |
+| [kind](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-kind.yaml) | `start`, `destroy`, `recreate` | `KIND_CREATE_EXTRA_ARGS` |
+| [pre-commit](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-pre-commit.yaml) | `install`, `start` | `PYTHON_VENVS_BASEDIR` |
+| [k8s](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |
 
 Every task in every module sets `dir: '{{.USER_WORKING_DIR}}'`, so commands run in the consumer project's working directory, never in this repository.
 <!--intro-end-->

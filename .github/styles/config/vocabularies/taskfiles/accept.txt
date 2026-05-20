@@ -8,3 +8,4 @@ automerge
 namespace
 repo
 config
+kubeconfig
