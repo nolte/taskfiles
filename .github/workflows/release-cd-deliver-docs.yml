@@ -1,6 +1,10 @@
 on:
   release:
     types: [published]
+  # Manual fallback when the `release: published` event was emitted under
+  # GITHUB_TOKEN — GitHub doesn't fire downstream workflows in that case
+  # (Known Platform Constraint per spec/project/workflow-health/).
+  workflow_dispatch:
 
 jobs:
   publish_docs:
