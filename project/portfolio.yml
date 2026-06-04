@@ -1,0 +1,21 @@
+# Portfolio manifest for nolte/taskfiles.
+# Schema: spec/portfolio/portfolio-management/ §Capability inventory per repository
+# Audience references resolve against AUDIENCES.md at the repo root.
+
+capabilities:
+  - name: reusable-taskfile-collection
+    description: >-
+      A collection of remotely-includable Taskfiles (src/taskfile-include-*.yaml
+      for mkdocs, pre-commit, kind, and k8s) that downstream nolte/* projects
+      include via the Task includes: mechanism to get consistent task targets
+      without copying Taskfile logic into each repository.
+    audience:
+      - Taskfile-consumer project
+      - Consumer-side developer running tasks locally
+      - Consumer-side CI/CD pipeline
+    status: active
+    rationale: >-
+      taskfiles is the single portfolio source of reusable Task includes;
+      consolidating them here keeps task targets consistent across consumers and
+      removes the per-repo Taskfile duplication the 2026-06-02 portfolio audit
+      flagged.
