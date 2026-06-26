@@ -11,10 +11,10 @@ last_updated: 2026-06-26
 
 # worktree
 
-Create and manage parallel working copies as [git worktrees](https://git-scm.com/docs/git-worktree),
-so every project in the portfolio gets the same predictable, reusable way to
-spin up an isolated checkout for a feature branch — without ever switching the
-primary checkout off `develop`.
+Create and manage parallel working copies as [git worktrees](https://git-scm.com/docs/git-worktree).
+Every project that consumes this collection gets the same predictable, reusable
+way to spin up an isolated checkout for a feature branch, without ever switching
+the primary checkout off `develop`.
 
 See [References → Common contract](../index.md#common-contract) for the
 `USER_WORKING_DIR`, pin-strategy, and override-syntax conventions that
@@ -23,7 +23,8 @@ apply across every module.
 ## Prerequisites
 
 - `git` on the `PATH`, run from inside a repository that has an `origin`
-  remote — `<repo>` is derived from `origin`, never guessed from the cwd.
+  remote. The module derives `<repo>` from `origin`, never from the current
+  working directory.
 - Optionally, the `NOLTE_WORKTREE_ROOT` environment variable to choose where
   worktrees land. It wins over the `WORKTREE_ROOT_DEFAULT` variable at
   runtime; both default to `~/repos/.worktrees`.
@@ -45,7 +46,7 @@ you pass one explicitly).
 | Task | Description |
 |------|-------------|
 | `worktree:add -- <branch> [slug]` | Fetch the base ref, create `<branch>` off `{{.WORKTREE_BASE_REF}}` in a new worktree, and seed a `.resume/<slug>/plan.md` plan stub. |
-| `worktree:remove -- <slug> [force]` | Remove the worktree for `<slug>`. The branch is kept. Pass `force` to discard a worktree that still holds uncommitted or untracked work (including the seeded plan stub). |
+| `worktree:remove -- <slug> [force]` | Remove the worktree for `<slug>`. The branch remains intact. Pass `force` to discard a worktree that still holds uncommitted or untracked work (including the seeded plan stub). |
 | `worktree:list` | Run `git worktree list` for the current repository. |
 | `worktree:root` | Print the resolved worktree root for this machine. |
 
@@ -55,7 +56,7 @@ drop the prefix, but the branch itself must carry one. The branch is always
 cut from a freshly fetched `{{.WORKTREE_BASE_REF}}`, so it starts from the
 remote tip regardless of the local checkout's state.
 
-The seeded `.resume/<slug>/plan.md` is a plan-before-work gate: fill it in
+The seeded `.resume/<slug>/plan.md` is a plan-before-work gate. Fill it in
 before starting substantive work, so a fresh resumable session started in the
 worktree can pick the work up from a known starting point. It lives under
 `.resume/`, which the consumer repository typically keeps out of version
@@ -107,7 +108,7 @@ task worktree:remove -- ci
   prefixes in `WORKTREE_ALLOWED_PREFIXES` (default `feat fix chore docs
   exp`). The slug may drop the prefix, but the branch must not.
 - **`worktree:remove` fails without `force`.** `git worktree remove`
-  refuses to drop a worktree with uncommitted or untracked files — and the
+  refuses to drop a worktree with uncommitted or untracked files, and the
   seeded `.resume/<slug>/plan.md` counts as untracked unless the consumer
   gitignores `.resume/`. Re-run with `task worktree:remove -- <slug> force`
   to discard it, or commit/move the work first.

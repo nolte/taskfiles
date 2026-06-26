@@ -10,3 +10,6 @@ repo
 config
 kubeconfig
 nolte
+worktree
+worktrees
+untracked

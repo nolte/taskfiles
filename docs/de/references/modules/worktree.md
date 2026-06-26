@@ -13,9 +13,9 @@ source_language: en
 # worktree
 
 Parallele Arbeitskopien als [git worktrees](https://git-scm.com/docs/git-worktree)
-erstellen und verwalten, sodass jedes Projekt im Portfolio denselben
-vorhersehbaren, wiederverwendbaren Weg erhält, um einen isolierten Checkout
-für einen Feature-Branch aufzusetzen — ohne den primären Checkout je von
+erstellen und verwalten. Jedes Projekt, das diese Sammlung nutzt, erhält
+denselben vorhersehbaren, wiederverwendbaren Weg, um einen isolierten Checkout
+für einen Feature-Branch anzulegen, ohne den primären Checkout je von
 `develop` wegzuschalten.
 
 Siehe [Referenzen → Gemeinsamer Vertrag](../index.md#gemeinsamer-vertrag) für
@@ -53,7 +53,7 @@ angegeben).
 | `worktree:root` | Den aufgelösten Worktree-Root dieser Maschine ausgeben. |
 
 `worktree:add` validiert den Branch-Prefix gegen
-`WORKTREE_ALLOWED_PREFIXES` (die branching-model-Regel): Der Pfad-Slug darf
+`WORKTREE_ALLOWED_PREFIXES` (die Branching-Modell-Regel): Der Pfad-Slug darf
 den Prefix weglassen, der Branch selbst muss aber einen tragen. Der Branch
 wird stets aus einem frisch gefetchten `{{.WORKTREE_BASE_REF}}` geschnitten,
 sodass er unabhängig vom Zustand des lokalen Checkouts an der Remote-Spitze
