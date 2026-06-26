@@ -70,7 +70,7 @@ control.
 | `WORKTREE_FETCH_REMOTE` | `origin` | Remote fetched before the worktree is created. |
 | `WORKTREE_FETCH_BRANCH` | `develop` | Branch fetched before the worktree is created. |
 | `WORKTREE_ALLOWED_PREFIXES` | `feat fix chore docs exp` | Space-separated branch prefixes accepted by `add`. |
-| `WORKTREE_ROOT_DEFAULT` | `$HOME/repos/.worktrees` | Fallback root when `NOLTE_WORKTREE_ROOT` is unset. |
+| `WORKTREE_ROOT_DEFAULT` | `~/repos/.worktrees` | Fallback root when `NOLTE_WORKTREE_ROOT` is unset. |
 
 ## Example
 

@@ -73,7 +73,7 @@ Versionskontrolle heraushält.
 | `WORKTREE_FETCH_REMOTE` | `origin` | Remote, das vor dem Erstellen des Worktrees gefetcht wird. |
 | `WORKTREE_FETCH_BRANCH` | `develop` | Branch, der vor dem Erstellen des Worktrees gefetcht wird. |
 | `WORKTREE_ALLOWED_PREFIXES` | `feat fix chore docs exp` | Leerzeichengetrennte Branch-Prefixes, die `add` akzeptiert. |
-| `WORKTREE_ROOT_DEFAULT` | `$HOME/repos/.worktrees` | Fallback-Root, wenn `NOLTE_WORKTREE_ROOT` nicht gesetzt ist. |
+| `WORKTREE_ROOT_DEFAULT` | `~/repos/.worktrees` | Fallback-Root, wenn `NOLTE_WORKTREE_ROOT` nicht gesetzt ist. |
 
 ## Beispiel
 
