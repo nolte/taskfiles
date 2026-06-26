@@ -4,6 +4,7 @@ version: '3'
 includes:
   mkdocs: ./src/taskfile-include-mkdocs.yaml
   pre-commit: ./src/taskfile-include-pre-commit.yaml
+  worktree: ./src/taskfile-include-worktree.yaml
 
 tasks:
   default:

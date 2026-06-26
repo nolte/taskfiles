@@ -13,6 +13,7 @@ A curated collection of reusable [Taskfile](https://github.com/go-task/task) inc
 | [kind](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-kind.yaml) | `start`, `destroy`, `recreate` | `KIND_CREATE_EXTRA_ARGS` |
 | [pre-commit](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-pre-commit.yaml) | `install`, `start` | `PYTHON_VENVS_BASEDIR` |
 | [k8s](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |
+| [worktree](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-worktree.yaml) | `add`, `remove`, `list`, `root` | `WORKTREE_BASE_REF`, `WORKTREE_ALLOWED_PREFIXES`, `WORKTREE_ROOT_DEFAULT` |
 
 Every task in every module sets `dir: '{{.USER_WORKING_DIR}}'`, so commands run in the consumer project's working directory, never in this repository.
 <!--intro-end-->
@@ -33,6 +34,7 @@ includes:
   kind: "{{.TASK_COLLECTION_BASE}}/taskfile-include-kind.yaml"
   pre-commit: "{{.TASK_COLLECTION_BASE}}/taskfile-include-pre-commit.yaml"
   k8s: "{{.TASK_COLLECTION_BASE}}/taskfile-include-k8s.yaml"
+  worktree: "{{.TASK_COLLECTION_BASE}}/taskfile-include-worktree.yaml"
 ```
 
 Run any wired task from the consumer's working directory, for example:
@@ -42,6 +44,7 @@ task mkdocs:start
 task kind:recreate
 task pre-commit:install
 task k8s:bootstrap
+task worktree:add -- feat/parser-fix
 ```
 
 ### Prerequisites
@@ -50,6 +53,7 @@ task k8s:bootstrap
 * For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`.
 * For `pre-commit:*`, a Python virtual environment at `~/.venvs/development`.
 * For `kind:*` and `k8s:*`, the underlying `kind`, `kubectl`, and `helm` binaries on the `PATH`.
+* For `worktree:*`, a `git` repository with an `origin` remote; optionally set `NOLTE_WORKTREE_ROOT` to choose where worktrees land (defaults to `~/repos/.worktrees`).
 
 The [nolte/workstation](https://github.com/nolte/workstation) playbook provisions both Python virtual environments. When a venv is missing, the affected task fails the first time it runs—provision it before invoking the task.
 
