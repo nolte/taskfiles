@@ -26,6 +26,8 @@ layout each time.
 - [pre-commit](modules/pre-commit.md): `pre-commit:install`,
   `pre-commit:start`
 - [k8s](modules/k8s.md): `k8s:bootstrap`, `k8s:install-argocd`
+- [worktree](modules/worktree.md): `worktree:add`, `worktree:remove`,
+  `worktree:list`, `worktree:root`
 
 ## Common contract
 

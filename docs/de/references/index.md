@@ -28,6 +28,8 @@ können, ohne sich jedes Mal in ein neues Layout einzuarbeiten.
 - [pre-commit](modules/pre-commit.md): `pre-commit:install`,
   `pre-commit:start`
 - [k8s](modules/k8s.md): `k8s:bootstrap`, `k8s:install-argocd`
+- [worktree](modules/worktree.md): `worktree:add`, `worktree:remove`,
+  `worktree:list`, `worktree:root`
 
 ## Gemeinsamer Vertrag
 

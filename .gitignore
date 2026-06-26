@@ -1,5 +1,10 @@
 site
 
+# Worktree plan stubs seeded by `task worktree:add` and skill audit trails
+# (lektorat, skill-review, …) are local working artifacts, never committed.
+.resume/
+.audits/
+
 .github/styles/*
 !.github/styles/.keep
 !.github/styles/config

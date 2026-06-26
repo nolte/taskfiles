@@ -18,6 +18,7 @@ nav:
           - kind: references/modules/kind.md
           - pre-commit: references/modules/pre-commit.md
           - k8s: references/modules/k8s.md
+          - worktree: references/modules/worktree.md
       - Governance and specs: references/governance.md
 
 plugins:

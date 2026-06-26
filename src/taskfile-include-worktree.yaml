@@ -1,0 +1,251 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  # Per-machine root that holds every worktree. The NOLTE_WORKTREE_ROOT
+  # environment variable wins at runtime; this var is only the fallback so
+  # consumers that never set the env var still land in a predictable place.
+  WORKTREE_ROOT_DEFAULT: "$HOME/repos/.worktrees"
+  # Base ref new branches are cut from. Fetched before the worktree is added,
+  # so it always starts from the remote tip regardless of the local checkout.
+  WORKTREE_BASE_REF: "origin/develop"
+  WORKTREE_FETCH_REMOTE: "origin"
+  WORKTREE_FETCH_BRANCH: "develop"
+  # Space-separated branch prefixes accepted by `add` (branching-model rule).
+  # The path slug may drop the prefix, but the branch itself must carry one.
+  WORKTREE_ALLOWED_PREFIXES: "feat fix chore docs exp"
+
+tasks:
+  root:
+    desc: |
+      Print the resolved worktree root for this machine. Reads
+      NOLTE_WORKTREE_ROOT and falls back to ~/repos/.worktrees.
+    dir: '{{.USER_WORKING_DIR}}'
+    silent: true
+    cmds:
+      - 'echo "${NOLTE_WORKTREE_ROOT:-{{.WORKTREE_ROOT_DEFAULT}}}"'
+
+  add:
+    desc: |
+      Create a parallel working copy (git worktree) under the configurable
+      worktree root, always in the same predictable place:
+        ${NOLTE_WORKTREE_ROOT:-~/repos/.worktrees}/<repo>/<slug>/
+      The branch is created off {{.WORKTREE_BASE_REF}} with an explicit base
+      ref and seeds a .resume/<slug>/plan.md plan stub (plan-before-work gate).
+      Usage: task worktree:add -- <branch> [slug]
+        task worktree:add -- feat/parser-fix
+        task worktree:add -- chore/ci-tidy ci
+    dir: '{{.USER_WORKING_DIR}}'
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        allowed_prefixes="{{.WORKTREE_ALLOWED_PREFIXES}}"
+        base_ref="{{.WORKTREE_BASE_REF}}"
+        fetch_remote="{{.WORKTREE_FETCH_REMOTE}}"
+        fetch_branch="{{.WORKTREE_FETCH_BRANCH}}"
+        root_default="{{.WORKTREE_ROOT_DEFAULT}}"
+
+        set -- {{.CLI_ARGS}}
+        branch="${1:-}"
+        slug="${2:-}"
+
+        usage() {
+          cat >&2 <<EOF
+        Usage: task worktree:add -- <branch> [slug]
+
+          <branch>  Full branch name including its prefix, e.g. feat/parser-fix.
+                    Allowed prefixes: ${allowed_prefixes}
+          [slug]    Optional kebab-case directory name under the worktree root.
+                    Defaults to the branch name with its prefix stripped.
+
+        The worktree is created at:
+          \${NOLTE_WORKTREE_ROOT:-~/repos/.worktrees}/<repo>/<slug>/
+        based on ${base_ref}.
+        EOF
+          exit 2
+        }
+
+        [ -n "$branch" ] || usage
+
+        # Branch-prefix rule (branching-model). The slug may drop the prefix,
+        # but the branch MUST carry one of the allowed prefixes.
+        prefix="${branch%%/*}"
+        ok=0
+        for p in $allowed_prefixes; do
+          [ "$prefix" = "$p" ] && [ "$prefix" != "$branch" ] && ok=1
+        done
+        if [ "$ok" -ne 1 ]; then
+          echo "✖ Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." >&2
+          echo "  The path slug may drop the prefix, but the branch MUST NOT." >&2
+          exit 1
+        fi
+
+        # Default slug: branch name minus the prefix segment.
+        [ -n "$slug" ] || slug="${branch#*/}"
+
+        # A slug MUST be a single path segment — never a traversal or nested path.
+        case "$slug" in
+          */*|*..*|"")
+            echo "✖ Slug '$slug' must be a single kebab-case path segment." >&2
+            exit 1
+            ;;
+        esac
+
+        # Resolve the configurable root. A leading ~ that arrives via the env
+        # variable is not expanded by the shell, so expand it ourselves.
+        root="${NOLTE_WORKTREE_ROOT:-$root_default}"
+        case "$root" in
+          "~") root="$HOME" ;;
+          "~/"*) root="$HOME/${root#\~/}" ;;
+        esac
+
+        # Derive <repo> from the origin remote — never inferred from the cwd.
+        origin_url="$(git remote get-url origin)"
+        repo="$(basename "$origin_url" .git)"
+
+        dest="$root/$repo/$slug"
+        if [ -e "$dest" ]; then
+          echo "✖ Destination already exists: $dest" >&2
+          exit 1
+        fi
+
+        echo "→ Worktree root : $root"
+        echo "→ Repository    : $repo"
+        echo "→ Branch        : $branch"
+        echo "→ Destination   : $dest"
+
+        git fetch "$fetch_remote" "$fetch_branch" --quiet
+        git worktree add -b "$branch" "$dest" "$base_ref"
+
+        # Plan-before-work gate: seed a foundational implementation-plan stub
+        # inside the new worktree so a fresh resumable session can pick the
+        # work up from a known starting point. It lives under .resume/ (gitignored).
+        plan_dir="$dest/.resume/$slug"
+        plan="$plan_dir/plan.md"
+        mkdir -p "$plan_dir"
+
+        cat > "$plan" <<EOF
+        # Implementation plan: $slug
+
+        > Foundational plan for worktree work on branch '$branch'. Authored BEFORE
+        > substantive work begins, so a fresh, resumable top-level session started in
+        > this worktree can pick the work up from a known starting point rather than
+        > reconstructing intent from a half-finished diff.
+        >
+        > - Branch: $branch
+        > - Worktree: $dest
+        > - Base: ${base_ref}
+        EOF
+
+        cat >> "$plan" <<'EOF'
+
+        ## 1. Goal
+
+        <!-- What outcome does this worktree deliver? One or two sentences. -->
+
+        ## 2. Current state (researched)
+
+        <!-- Relevant specs, files, and prior art — the source of truth for the design. -->
+
+        ## 3. Design decision
+
+        <!-- The load-bearing choice, plus the open questions to confirm with the
+             operator BEFORE work starts. -->
+
+        ## 4. Work steps (ordered)
+
+        1. <!-- first concrete step -->
+
+        ## 5. Invariants / guardrails
+
+        <!-- Rules carried over from CLAUDE.md and the governing specs that must hold. -->
+
+        ## 6. Status / resume anchors
+
+        - [ ] <!-- first task; the first unchecked box is where the next session resumes -->
+
+        > Resume: cd into this worktree and run `task resume` (or `claude --resume`),
+        > then continue this plan from the first unchecked box.
+        EOF
+
+        echo
+        echo "✓ Worktree ready."
+        echo
+        echo "→ Plan-before-work gate: a plan stub was written to"
+        echo "    .resume/$slug/plan.md inside the worktree."
+        echo "    Fill it in BEFORE starting substantive work on this branch."
+        echo
+        echo "→ Start the work in a FRESH top-level session scoped to this worktree:"
+        echo "    cd $dest && claude"
+
+  remove:
+    desc: |
+      Remove a worktree created with `add`. Prunes the linked working copy;
+      the branch itself is left intact so unmerged work is never lost. The
+      seeded .resume/<slug>/plan.md counts as an untracked file, so pass
+      `force` to drop a worktree that still holds uncommitted or untracked work.
+      Usage: task worktree:remove -- <slug> [force]
+    dir: '{{.USER_WORKING_DIR}}'
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        root_default="{{.WORKTREE_ROOT_DEFAULT}}"
+
+        set -- {{.CLI_ARGS}}
+        slug="${1:-}"
+        force_arg="${2:-}"
+
+        if [ -z "$slug" ]; then
+          echo "Usage: task worktree:remove -- <slug> [force]" >&2
+          exit 2
+        fi
+
+        case "$slug" in
+          */*|*..*) echo "✖ Slug '$slug' must be a single path segment." >&2; exit 1 ;;
+        esac
+
+        root="${NOLTE_WORKTREE_ROOT:-$root_default}"
+        case "$root" in
+          "~") root="$HOME" ;;
+          "~/"*) root="$HOME/${root#\~/}" ;;
+        esac
+
+        origin_url="$(git remote get-url origin)"
+        repo="$(basename "$origin_url" .git)"
+        dest="$root/$repo/$slug"
+
+        if [ ! -e "$dest" ]; then
+          echo "✖ No worktree at: $dest" >&2
+          exit 1
+        fi
+
+        echo "→ Removing worktree: $dest"
+        case "$force_arg" in
+          force|--force|-f)
+            git worktree remove --force "$dest"
+            ;;
+          "")
+            if ! git worktree remove "$dest" 2>/dev/null; then
+              echo "✖ Worktree still holds uncommitted or untracked work (e.g. the" >&2
+              echo "  seeded .resume/$slug/plan.md). Re-run with force to discard it:" >&2
+              echo "    task worktree:remove -- $slug force" >&2
+              exit 1
+            fi
+            ;;
+          *)
+            echo "✖ Unknown second argument '$force_arg' (expected: force)." >&2
+            exit 1
+            ;;
+        esac
+        echo "✓ Worktree removed. The branch was left intact."
+
+  list:
+    desc: List the git worktrees registered for this repository.
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - git worktree list
