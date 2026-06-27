@@ -85,7 +85,7 @@ The rendered [module pages](https://nolte.github.io/taskfiles/) document every t
 
 ## Contributing
 
-The full module conventions live in [`CLAUDE.md`](./CLAUDE.md) (intended both for humans and for AI-assisted edits) and, in narrative form, on the [Contributing page](https://nolte.github.io/taskfiles/contributing/) of the rendered docs. The short version:
+The full module conventions live in [`CLAUDE.md`](./CLAUDE.md) (intended both for humans and for AI-assisted edits) and, in narrative form, on the [Contributing page](https://nolte.github.io/taskfiles/guides/contributing/) of the rendered docs. The short version:
 
 * Filenames are `taskfile-include-<area>.yaml`. The `<area>` segment is the key consumers wire under `includes:`.
 * Every task sets `dir: '{{.USER_WORKING_DIR}}'` so behaviour stays anchored to the consumer's working directory.
