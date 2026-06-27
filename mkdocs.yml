@@ -1,4 +1,5 @@
 site_name: "taskfiles"
+site_url: "https://nolte.github.io/taskfiles/"
 theme:
   name: material
 docs_dir: docs/
