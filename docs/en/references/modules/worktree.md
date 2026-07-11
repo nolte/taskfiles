@@ -88,6 +88,21 @@ includes:
       WORKTREE_ALLOWED_PREFIXES: "feat fix chore"
 ```
 
+The `includes:` key is the task namespace, and the consumer chooses it. If
+"worktree" is not the vocabulary you want, mount the same module under a
+different key — for example `workingcopy` — and every task answers under that
+prefix instead, with identical behaviour:
+
+```yaml
+includes:
+  workingcopy: "{{.TASK_COLLECTION_BASE}}/taskfile-include-worktree.yaml"
+```
+
+```bash
+task workingcopy:add -- feat/parser-fix
+task workingcopy:remove -- parser-fix
+```
+
 Then, from the consumer's working directory:
 
 ```bash

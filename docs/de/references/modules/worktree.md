@@ -62,8 +62,8 @@ beginnt.
 Der angelegte `.resume/<slug>/plan.md` ist ein Plan-before-work-Gate: vor
 Beginn der eigentlichen Arbeit ausfüllen, damit eine frische, fortsetzbare
 Session im Worktree die Arbeit von einem bekannten Startpunkt aufnehmen kann.
-Er liegt unter `.resume/`, das das Konsument-Repository üblicherweise aus der
-Versionskontrolle heraushält.
+Er liegt unter `.resume/`; dieses Verzeichnis hält das Konsument-Repository
+üblicherweise aus der Versionskontrolle heraus.
 
 ## Variablen
 
@@ -89,6 +89,21 @@ includes:
     vars:
       WORKTREE_BASE_REF: "origin/main"
       WORKTREE_ALLOWED_PREFIXES: "feat fix chore"
+```
+
+Der `includes:`-Key ist der Task-Namespace, und der Konsument wählt ihn frei.
+Wenn „worktree" nicht die gewünschte Bezeichnung ist, lässt sich dasselbe
+Modul unter einem anderen Key mounten — etwa `workingcopy` — und jeder Task
+antwortet dann unter diesem Prefix, bei identischem Verhalten:
+
+```yaml
+includes:
+  workingcopy: "{{.TASK_COLLECTION_BASE}}/taskfile-include-worktree.yaml"
+```
+
+```bash
+task workingcopy:add -- feat/parser-fix
+task workingcopy:remove -- parser-fix
 ```
 
 Anschließend aus dem Arbeitsverzeichnis des Konsumenten:

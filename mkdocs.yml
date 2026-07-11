@@ -20,6 +20,7 @@ nav:
           - pre-commit: references/modules/pre-commit.md
           - k8s: references/modules/k8s.md
           - worktree: references/modules/worktree.md
+          - asdf: references/modules/asdf.md
       - Governance and specs: references/governance.md
 
 plugins:

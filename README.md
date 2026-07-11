@@ -14,6 +14,7 @@ A curated collection of reusable [Taskfile](https://github.com/go-task/task) inc
 | [pre-commit](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-pre-commit.yaml) | `install`, `start` | `PYTHON_VENVS_BASEDIR` |
 | [k8s](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |
 | [worktree](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-worktree.yaml) | `add`, `remove`, `list`, `root` | `WORKTREE_BASE_REF`, `WORKTREE_ALLOWED_PREFIXES`, `WORKTREE_ROOT_DEFAULT` |
+| [asdf](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-asdf.yaml) | `prune` | `ASDF_RESOLVE_DIR`, `ASDF_KEEP_UNPINNED` |
 
 Every task in every module sets `dir: '{{.USER_WORKING_DIR}}'`, so commands run in the consumer project's working directory, never in this repository.
 <!--intro-end-->
@@ -35,6 +36,7 @@ includes:
   pre-commit: "{{.TASK_COLLECTION_BASE}}/taskfile-include-pre-commit.yaml"
   k8s: "{{.TASK_COLLECTION_BASE}}/taskfile-include-k8s.yaml"
   worktree: "{{.TASK_COLLECTION_BASE}}/taskfile-include-worktree.yaml"
+  asdf: "{{.TASK_COLLECTION_BASE}}/taskfile-include-asdf.yaml"
 ```
 
 Run any wired task from the consumer's working directory, for example:
@@ -45,6 +47,14 @@ task kind:recreate
 task pre-commit:install
 task k8s:bootstrap
 task worktree:add -- feat/parser-fix
+task asdf:prune
+```
+
+Each `includes:` key is the task namespace, and the consumer chooses it. To run the worktree module under different vocabulary—say `workingcopy:remove` instead of `worktree:remove`—mount the same file under that key; every task answers under the new prefix with identical behaviour:
+
+```yaml
+includes:
+  workingcopy: "{{.TASK_COLLECTION_BASE}}/taskfile-include-worktree.yaml"
 ```
 
 ### Prerequisites
@@ -54,6 +64,7 @@ task worktree:add -- feat/parser-fix
 * For `pre-commit:*`, a Python virtual environment at `~/.venvs/development`.
 * For `kind:*` and `k8s:*`, the underlying `kind`, `kubectl`, and `helm` binaries on the `PATH`.
 * For `worktree:*`, a `git` repository with an `origin` remote; optionally set `NOLTE_WORKTREE_ROOT` to choose where worktrees land (defaults to `~/repos/.worktrees`).
+* For `asdf:*`, the [asdf](https://asdf-vm.com/) CLI on the `PATH` (written against asdf `v0.19`) with a populated `~/.tool-versions`.
 
 The [nolte/workstation](https://github.com/nolte/workstation) playbook provisions both Python virtual environments. When a venv is missing, the affected task fails the first time it runs—provision it before invoking the task.
 

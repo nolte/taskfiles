@@ -28,6 +28,7 @@ layout each time.
 - [k8s](modules/k8s.md): `k8s:bootstrap`, `k8s:install-argocd`
 - [worktree](modules/worktree.md): `worktree:add`, `worktree:remove`,
   `worktree:list`, `worktree:root`
+- [asdf](modules/asdf.md): `asdf:prune`
 
 ## Common contract
 

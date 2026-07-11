@@ -1,0 +1,152 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  # Directory the "active" version is resolved against. Defaults to $HOME so
+  # the prune sees the global ~/.tool-versions and ignores any project-local
+  # .tool-versions in the consumer's working directory — this is a
+  # machine-wide cleanup. Set to '{{.USER_WORKING_DIR}}' to honour a
+  # project-local pin instead.
+  ASDF_RESOLVE_DIR: "$HOME"
+  # When true, plugins that have NO active (globally pinned) version are left
+  # completely untouched instead of having every installed version treated as
+  # a removal candidate. Guards against wiping a tool that simply isn't pinned
+  # in ~/.tool-versions. Set to "false" to also prune unpinned plugins down to
+  # nothing (dangerous — you likely want to pin or uninstall those by hand).
+  ASDF_KEEP_UNPINNED: "true"
+
+tasks:
+  prune:
+    desc: |
+      Detect stale asdf tool versions and remove the ones that are no longer
+      in use. For every plugin, the version asdf currently resolves (the '*'
+      in `asdf list`, i.e. the global ~/.tool-versions pin) is KEPT; every
+      other installed version is a removal candidate.
+
+      Runs as a DRY RUN by default — it only reports what it would remove.
+      Pass `apply` to actually run `asdf uninstall` for each candidate.
+      Optional plugin names restrict the scan to those plugins.
+
+      Usage: task asdf:prune -- [apply] [plugin...]
+        task asdf:prune                 # dry run, all plugins
+        task asdf:prune -- apply        # remove all stale versions
+        task asdf:prune -- golang       # dry run, only golang
+        task asdf:prune -- apply golang kubectl
+    dir: '{{.USER_WORKING_DIR}}'
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        resolve_dir="{{.ASDF_RESOLVE_DIR}}"
+        keep_unpinned="{{.ASDF_KEEP_UNPINNED}}"
+
+        if ! command -v asdf >/dev/null 2>&1; then
+          echo "✖ asdf is not installed or not on the PATH." >&2
+          exit 1
+        fi
+
+        # Parse args: `apply` (in any position) switches from dry run to
+        # actual uninstall; every other token is a plugin-name filter.
+        set -- {{.CLI_ARGS}}
+        apply=0
+        filter=""
+        for a in "$@"; do
+          case "$a" in
+            apply|--apply|-a) apply=1 ;;
+            *) filter="$filter $a" ;;
+          esac
+        done
+
+        # Resolve the "active" version against the chosen directory (defaults
+        # to $HOME so the global pin wins). asdf marks it with '*' in `list`.
+        cd "$resolve_dir"
+
+        # Plugins to inspect: the explicit filter, or every installed plugin.
+        if [ -n "${filter# }" ]; then
+          plugins="$filter"
+        else
+          plugins="$(asdf plugin list 2>/dev/null || true)"
+        fi
+
+        if [ -z "${plugins# }" ]; then
+          echo "No asdf plugins found — nothing to prune."
+          exit 0
+        fi
+
+        if [ "$apply" -eq 1 ]; then
+          echo "→ asdf prune (resolving against: $resolve_dir) — APPLY"
+        else
+          echo "→ asdf prune (resolving against: $resolve_dir) — DRY RUN"
+          echo "  Pass 'apply' to actually uninstall the candidates:"
+          echo "    task asdf:prune -- apply"
+        fi
+        echo
+
+        total_candidates=0
+        removed=0
+        failed=0
+        skipped_plugins=0
+
+        # NOTE: this loop is deliberately `continue`-free. The embedded shell
+        # (mvdan/sh, as shipped with go-task) mis-handles `continue` inside
+        # nested `if` blocks — it falls through to the following code instead
+        # of starting the next iteration — so the control flow is expressed
+        # entirely with if/elif/else.
+        for plugin in $plugins; do
+          # All installed versions (one per line, '*'/spaces stripped) and the
+          # single active one. Version strings carry no spaces or '*', so the
+          # substitution is safe even for tags like mc's RELEASE.2020-...Z.
+          all_versions="$(asdf list "$plugin" 2>/dev/null | sed 's/[ *]//g' || true)"
+          active="$(asdf list "$plugin" 2>/dev/null | awk '/\*/{gsub(/[ *]/,""); print; exit}' || true)"
+
+          if [ -z "$all_versions" ]; then
+            # Nothing installed (or unknown plugin) — skip silently.
+            :
+          elif [ -z "$active" ] && [ "$keep_unpinned" = "true" ]; then
+            n="$(printf '%s\n' "$all_versions" | grep -c . || true)"
+            echo "[$plugin] ⚠ no active version pinned — skipped ($n installed)"
+            skipped_plugins=$((skipped_plugins + 1))
+          else
+            if [ -n "$active" ]; then
+              echo "[$plugin] active: $active"
+            else
+              # keep_unpinned=false: with no active version every install is a
+              # candidate. Reported per-version below.
+              echo "[$plugin] ⚠ no active version pinned — ALL versions are candidates"
+            fi
+
+            plugin_candidates=0
+            for v in $all_versions; do
+              if [ "$v" != "$active" ]; then
+                total_candidates=$((total_candidates + 1))
+                plugin_candidates=$((plugin_candidates + 1))
+                if [ "$apply" -eq 1 ]; then
+                  if asdf uninstall "$plugin" "$v" >/dev/null 2>&1; then
+                    echo "  ✓ removed: $v"
+                    removed=$((removed + 1))
+                  else
+                    echo "  ✖ failed to remove: $v"
+                    failed=$((failed + 1))
+                  fi
+                else
+                  echo "  ✖ candidate: $v"
+                fi
+              fi
+            done
+
+            if [ "$plugin_candidates" -eq 0 ] && [ -n "$active" ]; then
+              echo "  (no stale versions)"
+            fi
+          fi
+        done
+
+        echo
+        if [ "$apply" -eq 1 ]; then
+          echo "Summary: $removed removed, $failed failed, $skipped_plugins plugin(s) skipped."
+          [ "$failed" -gt 0 ] && exit 1 || true
+        else
+          echo "Summary: $total_candidates candidate(s), $skipped_plugins plugin(s) skipped."
+          echo "DRY RUN — nothing was removed. Re-run with 'apply' to uninstall."
+        fi
