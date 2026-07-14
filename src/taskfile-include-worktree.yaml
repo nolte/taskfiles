@@ -117,8 +117,28 @@ tasks:
         echo "→ Branch        : $branch"
         echo "→ Destination   : $dest"
 
-        git fetch "$fetch_remote" "$fetch_branch" --quiet
-        git worktree add -b "$branch" "$dest" "$base_ref"
+        # Fetch the base ref strictly non-interactively. GIT_TERMINAL_PROMPT=0
+        # plus SSH BatchMode guarantees git can never fall into a credential or
+        # passphrase prompt when the task runs from a non-interactive context
+        # (a stale SSH_AUTH_SOCK between sessions was the cause of the
+        # intermittent "no terminal" failure). If the remote is unreachable we
+        # fall back to the last-known local base ref instead of aborting before
+        # the worktree is even created.
+        if ! GIT_TERMINAL_PROMPT=0 \
+             GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh} -o BatchMode=yes -o ConnectTimeout=10" \
+             git fetch "$fetch_remote" "$fetch_branch" --quiet < /dev/null; then
+          if git rev-parse --verify --quiet "$base_ref^{commit}" >/dev/null; then
+            echo "⚠ Could not reach ${fetch_remote} (offline, or no non-interactive" >&2
+            echo "  credentials — check that ssh-agent is reachable via SSH_AUTH_SOCK)." >&2
+            echo "  Falling back to the local ${base_ref}, which may be behind the remote." >&2
+          else
+            echo "✖ Could not fetch ${fetch_remote}/${fetch_branch} and no local" >&2
+            echo "  ${base_ref} exists to fall back to. Make ssh-agent reachable" >&2
+            echo "  (SSH_AUTH_SOCK) or ensure credentials work non-interactively, then retry." >&2
+            exit 1
+          fi
+        fi
+        git worktree add -b "$branch" "$dest" "$base_ref" < /dev/null
 
         # Plan-before-work gate: seed a foundational implementation-plan stub
         # inside the new worktree so a fresh resumable session can pick the
