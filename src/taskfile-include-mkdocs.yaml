@@ -6,6 +6,7 @@ vars:
   PYTHON_VENVS_BASEDIR: ~/.venvs/
   PYTHON_VENV_DIR_DOCS: "{{.PYTHON_VENVS_BASEDIR}}/docs"
   MKDOCS_PORT: 8001
+  MKDOCS_BUILD_EXTRA_ARGS: ''
 
 tasks:
   start:
@@ -17,3 +18,9 @@ tasks:
         source {{.PYTHON_VENV_DIR_DOCS}}/bin/activate && \
             mkdocs serve -a localhost:{{.MKDOCS_PORT}}
         "
+
+  build:
+    desc: mkdocs build docs (strict, fails on warnings)
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - source {{.PYTHON_VENV_DIR_DOCS}}/bin/activate && mkdocs build --strict {{.MKDOCS_BUILD_EXTRA_ARGS}}
