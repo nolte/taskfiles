@@ -6,13 +6,13 @@ audience:
   - consumer-ci
 content_mode: reference
 track: developer-docs
-last_updated: 2026-05-20
+last_updated: 2026-08-09
 source_language: en
 ---
 
 # mkdocs
 
-Servieren der [mkdocs](https://www.mkdocs.org/)-Site des
+Servieren und striktes Bauen der [mkdocs](https://www.mkdocs.org/)-Site des
 Konsument-Projekts aus einer vorbereiteten Python-Virtual-Environment.
 
 Siehe [Referenzen → Gemeinsamer Vertrag](../index.md#gemeinsamer-vertrag) für
@@ -34,12 +34,14 @@ und Virtual Environments, die modulübergreifend gelten.
 | Task | Beschreibung |
 |------|--------------|
 | `mkdocs:start` | `PYTHON_VENV_DIR_DOCS` aktivieren und `mkdocs serve -a localhost:{{.MKDOCS_PORT}}` ausführen. |
+| `mkdocs:build` | `PYTHON_VENV_DIR_DOCS` aktivieren und `mkdocs build --strict {{.MKDOCS_BUILD_EXTRA_ARGS}}` ausführen; schlägt bei jeder Warnung fehl, sodass CI die vollständige Baubarkeit der Site prüfen kann. |
 
 ## Variablen
 
 | Variable | Default | Zweck |
 |----------|---------|-------|
 | `MKDOCS_PORT` | `8001` | Port für `mkdocs serve`. |
+| `MKDOCS_BUILD_EXTRA_ARGS` | (leer) | Zusätzliche Argumente, die an `mkdocs build --strict` angehängt werden. |
 | `PYTHON_VENVS_BASEDIR` | `~/.venvs/` | Basisverzeichnis für die Python-Virtual-Environments. |
 | `PYTHON_VENV_DIR_DOCS` | `{{.PYTHON_VENVS_BASEDIR}}/docs` | Vollständiger Pfad zur Docs-Virtual-Environment. |
 

@@ -21,7 +21,7 @@ One page per include file under `src/`. Every page follows the same schema
 **Troubleshooting**) so consumers can scan all four without learning a new
 layout each time.
 
-- [mkdocs](modules/mkdocs.md): `mkdocs:start`
+- [mkdocs](modules/mkdocs.md): `mkdocs:start`, `mkdocs:build`
 - [kind](modules/kind.md): `kind:start`, `kind:destroy`, `kind:recreate`
 - [pre-commit](modules/pre-commit.md): `pre-commit:install`,
   `pre-commit:start`

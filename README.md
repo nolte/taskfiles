@@ -9,7 +9,7 @@ A curated collection of reusable [Taskfile](https://github.com/go-task/task) inc
 
 | Module | Tasks | Key variables |
 |--------|-------|---------------|
-| [mkdocs](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-mkdocs.yaml) | `start` | `MKDOCS_PORT` |
+| [mkdocs](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-mkdocs.yaml) | `start`, `build` | `MKDOCS_PORT`, `MKDOCS_BUILD_EXTRA_ARGS` |
 | [kind](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-kind.yaml) | `start`, `destroy`, `recreate` | `KIND_CREATE_EXTRA_ARGS` |
 | [pre-commit](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-pre-commit.yaml) | `install`, `start` | `PYTHON_VENVS_BASEDIR` |
 | [k8s](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |

@@ -23,7 +23,7 @@ Schema (kurze Einleitung, **Voraussetzungen**, **Tasks**, **Variablen**,
 **Beispiel**, **Fehlerbehebung**), sodass Konsumenten alle vier scannen
 können, ohne sich jedes Mal in ein neues Layout einzuarbeiten.
 
-- [mkdocs](modules/mkdocs.md): `mkdocs:start`
+- [mkdocs](modules/mkdocs.md): `mkdocs:start`, `mkdocs:build`
 - [kind](modules/kind.md): `kind:start`, `kind:destroy`, `kind:recreate`
 - [pre-commit](modules/pre-commit.md): `pre-commit:install`,
   `pre-commit:start`
