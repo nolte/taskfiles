@@ -23,8 +23,4 @@ tasks:
     desc: mkdocs build docs (strict, fails on warnings)
     dir: '{{.USER_WORKING_DIR}}'
     cmds:
-      - |
-        bash -c "
-        source {{.PYTHON_VENV_DIR_DOCS}}/bin/activate && \
-            mkdocs build --strict {{.MKDOCS_BUILD_EXTRA_ARGS}}
-        "
+      - source {{.PYTHON_VENV_DIR_DOCS}}/bin/activate && mkdocs build --strict {{.MKDOCS_BUILD_EXTRA_ARGS}}
