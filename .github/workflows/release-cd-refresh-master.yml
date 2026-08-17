@@ -32,6 +32,34 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
+      # The reusable's App-token mint step is `continue-on-error`, so a
+      # half-configured pair degrades silently: a rotated private key that
+      # wasn't copied into the repo secret makes the mint fail, the error is
+      # swallowed, and the push falls back to GITHUB_TOKEN — dying with the
+      # exact `refusing to allow a GitHub App ...` rejection the App token was
+      # wired in to avoid, with the real cause visible only as an annotation on
+      # a step that didn't fail. Fail here instead, where the message is plain.
+      - name: Require both App credentials or neither
+        env:
+          HAS_APP_ID: ${{ vars.PORTFOLIO_APP_ID != '' }}
+          HAS_APP_KEY: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY != '' }}
+        run: |
+          set -euo pipefail
+
+          if [ "${HAS_APP_ID}" != "${HAS_APP_KEY}" ]; then
+            echo "::error::App credentials are half-configured (PORTFOLIO_APP_ID set: ${HAS_APP_ID}," \
+                 "PORTFOLIO_APP_PRIVATE_KEY set: ${HAS_APP_KEY}). The reusable would swallow the failed" \
+                 "mint and push as GITHUB_TOKEN, which cannot write under .github/workflows/." \
+                 "Set both, or unset both to fall back deliberately." >&2
+            exit 1
+          fi
+
+          if [ "${HAS_APP_ID}" = "true" ]; then
+            echo "App credentials present; the refresh will push with an installation token."
+          else
+            echo "No App credentials configured; the refresh will push with GITHUB_TOKEN."
+          fi
+
       - name: Reject a ref that isn't a release tag
         env:
           REQUESTED_TAG: ${{ inputs.tag }}
@@ -62,21 +90,28 @@ jobs:
     uses: nolte/gh-plumbing/.github/workflows/reusable-release-cd-refresh-master.yml@d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be # v2.0.0
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
+      app-private-key: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY }}
     permissions:
       contents: write
     with:
       target_branch: main
       # `inputs.tag` on the manual path, the release payload on the automatic
       # one. Mirrors the reference wiring in nolte/gh-plumbing's own caller.
-      #
-      # The reusable also accepts `app-id` / `app-private-key` to mint an App
-      # installation token instead of pushing as GITHUB_TOKEN. Deliberately not
-      # wired here yet: `vars.PORTFOLIO_APP_ID` exists, but whether that
-      # installation holds `contents: write` on this repository is unverified,
-      # and the reusable's `continue-on-error` on the mint step only covers a
-      # failed mint — a successful mint without push rights would break the
-      # today-green automatic path. Wire it in a separate change once the
-      # installation permissions are confirmed; it becomes mandatory when
-      # Phase 2 of gh-plumbing#330 lands `restrictions.apps` on the
-      # presentation branch.
       from_branch: ${{ inputs.tag || github.event.release.tag_name }}
+      # The App token is a hard requirement here, not an audit-trail nicety.
+      # GitHub rejects a push from a GitHub App identity that creates or updates
+      # any file under .github/workflows/ unless the installation holds the
+      # `workflows` permission — and GITHUB_TOKEN is such an identity, with no
+      # `workflows` scope available in the permissions: block above to grant it.
+      # Refreshing `main` resets it to the release tag, and that diff carries
+      # workflow files whenever `main` has fallen behind, so the push is
+      # rejected regardless of branch protection (`main` is unprotected here and
+      # it was rejected anyway). Observed in run 32065009956; recorded as a
+      # platform constraint in spec/project/workflow-health/.
+      #
+      # The installation therefore needs BOTH `contents: write` and
+      # `workflows: write`. Note the reusable's mint step is
+      # `continue-on-error`, which only covers a failed mint: if the mint
+      # succeeds but the installation lacks a permission, there is no fallback
+      # to secrets.token and the push fails outright.
+      app-id: ${{ vars.PORTFOLIO_APP_ID }}
