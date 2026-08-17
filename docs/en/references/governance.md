@@ -36,9 +36,13 @@ consumes the repository. Every documentation refactor traces back to it.
 ## Reusable workflows
 
 Every workflow under `.github/workflows/` delegates to a reusable workflow
-in [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing). The current
-pin is **`v1.1.18`**. Bump every workflow reference together when updating,
-because mixing tags between workflows is a known source of drift.
+in [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing). Each reference
+is pinned to a full-length commit digest with the corresponding version as a
+trailing comment; the current version is **`v2.0.0`**. Read the digest from the
+workflow files themselves rather than from this page, because Renovate bumps it
+automatically and doesn't touch prose. Bump every workflow reference together
+when updating, because mixing versions between workflows is a known source of
+drift.
 
 | Workflow | Reusable target |
 |----------|-----------------|
@@ -57,8 +61,10 @@ Renovate runs on this repository through
 which extends `nolte/gh-plumbing//renovate-configs/common` at a pinned tag.
 Concrete expectations:
 
-- All pins use released tags. No floating `@develop` or `@main` references
-  in workflow `uses:` lines.
+- All workflow `uses:` references pin to a full-length commit digest, with the
+  released version named in a trailing comment. No floating `@develop` or
+  `@main` references, and no bare tag: a tag can be moved onto different code,
+  which is what the March 2025 `tj-actions/changed-files` compromise did.
 - Renovate groups dependency bumps into a single pull request so reviewers
   see one batch per cycle.
 - Pull requests land through the standard automerge path once checks pass.

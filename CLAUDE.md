@@ -36,6 +36,6 @@ pre-commit run --all-files
 
 ## CI
 
-All workflows in `.github/workflows/` delegate to reusable workflows in `nolte/gh-plumbing` (pre-commit, trivy, chain-bench, mkdocs publish, release-drafter). Pinning is by tag (currently `v1.1.10`); bump all workflow references together.
+All workflows in `.github/workflows/` delegate to reusable workflows in `nolte/gh-plumbing` (pre-commit, trivy, chain-bench, mkdocs publish, release-drafter). Every `uses:` reference is pinned to a full-length commit digest with the released version as a trailing comment — currently the `v2.0.0` line. Read the digest itself from `.github/workflows/`, never from prose: Renovate runs with `pinDigests: true` and bumps the digest without touching documentation. Never replace a digest pin with a bare tag; bump all workflow references together.
 
 Prose in Markdown is linted with Vale using the config in `.vale.ini` (Microsoft + RedHat + nolte custom styles).
