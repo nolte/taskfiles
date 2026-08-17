@@ -21,17 +21,21 @@ jobs:
     uses: nolte/gh-plumbing/.github/workflows/reusable-release-cd-refresh-master.yml@d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be # v2.0.0
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
-      app-private-key: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY }}
     permissions:
       contents: write
     with:
       target_branch: main
       # `inputs.tag` on the manual path, the release payload on the automatic
       # one. Mirrors the reference wiring in nolte/gh-plumbing's own caller.
+      #
+      # The reusable also accepts `app-id` / `app-private-key` to mint an App
+      # installation token instead of pushing as GITHUB_TOKEN. Deliberately not
+      # wired here yet: `vars.PORTFOLIO_APP_ID` exists, but whether that
+      # installation holds `contents: write` on this repository is unverified,
+      # and the reusable's `continue-on-error` on the mint step only covers a
+      # failed mint — a successful mint without push rights would break the
+      # today-green automatic path. Wire it in a separate change once the
+      # installation permissions are confirmed; it becomes mandatory when
+      # Phase 2 of gh-plumbing#330 lands `restrictions.apps` on the
+      # presentation branch.
       from_branch: ${{ inputs.tag || github.event.release.tag_name }}
-      # Forwarding the App id lets the reusable mint a short-lived
-      # installation token instead of pushing as GITHUB_TOKEN. `main` is
-      # unprotected here today, so this is an audit-trail improvement now and
-      # a hard requirement once Phase 2 of gh-plumbing#330 lands
-      # `restrictions.apps` on the presentation branch.
-      app-id: ${{ vars.PORTFOLIO_APP_ID }}
