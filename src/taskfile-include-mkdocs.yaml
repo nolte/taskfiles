@@ -2,11 +2,29 @@
 
 version: '3'
 
+# Every variable below is written as `{{.NAME | default "<fallback>"}}` rather
+# than as a plain literal. A plain literal in an included Taskfile's own `vars:`
+# block always wins over a value the consumer passes at the `includes:` site, so
+# the module contract "consumers can override without forking" only holds for
+# variables written in this form.
+#
+# Override a variable from the consumer's Taskfile:
+#
+#   includes:
+#     mkdocs:
+#       taskfile: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
+#       vars:
+#         PYTHON_VENV_DIR_DOCS: .venv
+#
+# Override the leaf variable you actually want to change. Overriding
+# PYTHON_VENVS_BASEDIR alone does not reach PYTHON_VENV_DIR_DOCS: a variable
+# derived inside this same `vars:` block reads the module's own base value, not
+# the consumer's. Pass PYTHON_VENV_DIR_DOCS itself to relocate the docs venv.
 vars:
-  PYTHON_VENVS_BASEDIR: ~/.venvs/
-  PYTHON_VENV_DIR_DOCS: "{{.PYTHON_VENVS_BASEDIR}}/docs"
-  MKDOCS_PORT: 8001
-  MKDOCS_BUILD_EXTRA_ARGS: ''
+  PYTHON_VENVS_BASEDIR: '{{.PYTHON_VENVS_BASEDIR | default "~/.venvs"}}'
+  PYTHON_VENV_DIR_DOCS: '{{.PYTHON_VENV_DIR_DOCS | default (printf "%s/docs" .PYTHON_VENVS_BASEDIR)}}'
+  MKDOCS_PORT: '{{.MKDOCS_PORT | default "8001"}}'
+  MKDOCS_BUILD_EXTRA_ARGS: '{{.MKDOCS_BUILD_EXTRA_ARGS | default ""}}'
 
 tasks:
   start:

@@ -9,7 +9,7 @@ A curated collection of reusable [Taskfile](https://github.com/go-task/task) inc
 
 | Module | Tasks | Key variables |
 |--------|-------|---------------|
-| [mkdocs](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-mkdocs.yaml) | `start`, `build` | `MKDOCS_PORT`, `MKDOCS_BUILD_EXTRA_ARGS` |
+| [mkdocs](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-mkdocs.yaml) | `start`, `build` | `MKDOCS_PORT`, `MKDOCS_BUILD_EXTRA_ARGS`, `PYTHON_VENV_DIR_DOCS` |
 | [kind](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-kind.yaml) | `start`, `destroy`, `recreate` | `KIND_CREATE_EXTRA_ARGS` |
 | [pre-commit](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-pre-commit.yaml) | `install`, `start` | `PYTHON_VENVS_BASEDIR` |
 | [k8s](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |
@@ -57,10 +57,24 @@ includes:
   workingcopy: "{{.TASK_COLLECTION_BASE}}/taskfile-include-worktree.yaml"
 ```
 
+### Overriding module variables
+
+Pass a variable at the `includes:` site to change a module's behaviour without forking it. The `mkdocs` module activates `~/.venvs/docs` by default. A project that keeps its documentation tooling in a project-local virtual environment redirects it:
+
+```yaml
+includes:
+  mkdocs:
+    taskfile: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
+    vars:
+      PYTHON_VENV_DIR_DOCS: .venv
+```
+
+Override the leaf variable you want to change, not a base it's derived from. Passing `PYTHON_VENVS_BASEDIR` alone doesn't reach `PYTHON_VENV_DIR_DOCS`, because a variable derived inside a module's own `vars:` block reads that module's base value rather than the consumer's.
+
 ### Prerequisites
 
 * [go-task](https://taskfile.dev) CLI on the `PATH`.
-* For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`.
+* For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`, or any other path passed as `PYTHON_VENV_DIR_DOCS` (see [Overriding module variables](#overriding-module-variables)).
 * For `pre-commit:*`, a Python virtual environment at `~/.venvs/development`.
 * For `kind:*` and `k8s:*`, the underlying `kind`, `kubectl`, and `helm` binaries on the `PATH`.
 * For `worktree:*`, a `git` repository with an `origin` remote; optionally set `NOLTE_WORKTREE_ROOT` to choose where worktrees land (defaults to `~/repos/.worktrees`).
