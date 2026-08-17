@@ -57,24 +57,10 @@ includes:
   workingcopy: "{{.TASK_COLLECTION_BASE}}/taskfile-include-worktree.yaml"
 ```
 
-### Overriding module variables
-
-Pass a variable at the `includes:` site to change a module's behaviour without forking it. The `mkdocs` module activates `~/.venvs/docs` by default. A project that keeps its documentation tooling in a project-local virtual environment redirects it:
-
-```yaml
-includes:
-  mkdocs:
-    taskfile: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
-    vars:
-      PYTHON_VENV_DIR_DOCS: .venv
-```
-
-Override the leaf variable you want to change, not a base it's derived from. Passing `PYTHON_VENVS_BASEDIR` alone doesn't reach `PYTHON_VENV_DIR_DOCS`, because a variable derived inside a module's own `vars:` block reads that module's base value rather than the consumer's.
-
 ### Prerequisites
 
 * [go-task](https://taskfile.dev) CLI on the `PATH`.
-* For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`, or any other path passed as `PYTHON_VENV_DIR_DOCS` (see [Overriding module variables](#overriding-module-variables)).
+* For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`, or any other path passed as `PYTHON_VENV_DIR_DOCS` (see [Per-module overrides](#per-module-overrides)).
 * For `pre-commit:*`, a Python virtual environment at `~/.venvs/development`.
 * For `kind:*` and `k8s:*`, the underlying `kind`, `kubectl`, and `helm` binaries on the `PATH`.
 * For `worktree:*`, a `git` repository with an `origin` remote; optionally set `NOLTE_WORKTREE_ROOT` to choose where worktrees land (defaults to `~/repos/.worktrees`).
@@ -95,7 +81,7 @@ Replace `<tag>` with a released version from [the GitHub releases page](https://
 
 ### Per-module overrides
 
-Each module exposes a small set of `vars:` defaults. Override them with the long-form `includes:` syntax:
+Each module exposes a small set of `vars:` defaults. Override them with the long-form `includes:` syntax. A project that keeps its documentation tooling in a project-local virtual environment redirects the `mkdocs` module away from the machine-global `~/.venvs/docs` this way:
 
 ```yaml
 includes:
@@ -103,7 +89,12 @@ includes:
     taskfile: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
     vars:
       MKDOCS_PORT: 8080
+      PYTHON_VENV_DIR_DOCS: .venv
 ```
+
+An override only takes effect where the module declares the variable as `'{{.NAME | default "…"}}'`. A module that declares a plain literal instead wins over the value you pass and ignores the override silently. **Today only `mkdocs` is converted**; overrides against `kind`, `k8s`, `pre-commit`, `worktree`, and `asdf` are accepted but have no effect. Converting the remaining modules is tracked work; until then, treat their variables as read-only defaults.
+
+An exported environment variable of the same name reaches a converted module's default too, so a `MKDOCS_PORT` set in a CI environment moves the serve port whether or not the Taskfile mentions it.
 
 The rendered [module pages](https://nolte.github.io/taskfiles/) document every task, every variable, and a copy-paste example per module.
 <!--usage-end-->
