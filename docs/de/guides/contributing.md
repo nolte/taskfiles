@@ -84,8 +84,11 @@ nicht genutzt wird.
   Branching-Modell aus `nolte/claude-shared`.
 - Pull Requests durchlaufen die wiederverwendbaren Workflows aus
   [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing) unter einem
-  gepinnten Tag (aktuell `v1.1.18`). Bei einem Pin-Bump alle
-  Workflow-Referenzen gemeinsam aktualisieren.
+  gepinnten Commit-Digest (aktuell die `v2.0.0`-Zeile; den Digest selbst bitte
+  aus `.github/workflows/` lesen, da Renovate ihn bumpt, ohne diese Seite
+  anzufassen). Bei einem Pin-Bump alle Workflow-Referenzen gemeinsam
+  aktualisieren und die Digest-Form beibehalten — ein blankes Tag lässt sich
+  auf anderen Code umbiegen.
 - Merges sind ausschließlich Squash und durchlaufen Automerge, sobald die
   Checks grün sind. Renovate-getriebene Dependency-Bumps gehen denselben
   Weg.
