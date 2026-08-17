@@ -2,11 +2,32 @@
 
 version: '3'
 
+# Every variable below is written as `{{.NAME | default "<fallback>"}}` rather
+# than as a plain literal. A plain literal in an included Taskfile's own `vars:`
+# block always wins over a value the consumer passes at the `includes:` site, so
+# the module contract "consumers can override without forking" only holds for
+# variables written in this form.
+#
+# Override a variable from the consumer's Taskfile:
+#
+#   includes:
+#     mkdocs:
+#       taskfile: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
+#       vars:
+#         PYTHON_VENV_DIR_DOCS: .venv
+#
+# Each variable states its own literal default and is never derived from
+# another variable in this block. A derived default resolves against a scope
+# that doesn't always carry the base variable: where a consumer declares a
+# same-named variable in its root `vars:`, the base renders as nil and the task
+# fails with a shell parse error. Keep every default self-contained.
+#
+# An exported environment variable of the same name also reaches these
+# defaults, so a `MKDOCS_PORT` set in a CI environment moves the serve port.
 vars:
-  PYTHON_VENVS_BASEDIR: ~/.venvs/
-  PYTHON_VENV_DIR_DOCS: "{{.PYTHON_VENVS_BASEDIR}}/docs"
-  MKDOCS_PORT: 8001
-  MKDOCS_BUILD_EXTRA_ARGS: ''
+  PYTHON_VENV_DIR_DOCS: '{{.PYTHON_VENV_DIR_DOCS | default "~/.venvs/docs"}}'
+  MKDOCS_PORT: '{{.MKDOCS_PORT | default "8001"}}'
+  MKDOCS_BUILD_EXTRA_ARGS: '{{.MKDOCS_BUILD_EXTRA_ARGS | default ""}}'
 
 tasks:
   start:
