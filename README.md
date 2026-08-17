@@ -112,7 +112,7 @@ Pull requests run through the reusable `nolte/gh-plumbing` workflows. Merges are
 
 ## Governance and specs
 
-This repository follows the portfolio conventions shipped by [`nolte/claude-shared`](https://github.com/nolte/claude-shared) (project structure, branching model, release automation, audience identification) and consumes the reusable workflows from [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing) at a pinned tag. Dependency bumps land through Renovate, which extends `nolte/gh-plumbing//renovate-configs/common`.
+This repository follows the portfolio conventions shipped by [`nolte/claude-shared`](https://github.com/nolte/claude-shared) (project structure, branching model, release automation, audience identification) and consumes the reusable workflows from [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing) at a pinned commit digest. Dependency bumps land through Renovate, which extends `nolte/gh-plumbing//renovate-configs/common`.
 
 For the recorded audience analysis that drives the documentation structure, see [`AUDIENCES.md`](./AUDIENCES.md).
 
