@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <url>
+        <loc>https://nolte.github.io/taskfiles/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/getting-started/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/getting-started/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/getting-started/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/guides/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/guides/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/guides/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/guides/contributing/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/guides/contributing/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/guides/contributing/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/governance/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/governance/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/governance/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/modules/asdf/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/asdf/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/asdf/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/modules/k8s/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/k8s/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/k8s/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/modules/kind/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/kind/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/kind/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/modules/mkdocs/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/mkdocs/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/mkdocs/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/modules/pre-commit/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/pre-commit/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/pre-commit/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/references/modules/worktree/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/worktree/"/>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/worktree/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/getting-started/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/getting-started/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/getting-started/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/guides/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/guides/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/guides/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/guides/contributing/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/guides/contributing/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/guides/contributing/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/governance/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/governance/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/governance/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/modules/asdf/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/asdf/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/asdf/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/modules/k8s/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/k8s/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/k8s/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/modules/kind/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/kind/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/kind/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/modules/mkdocs/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/mkdocs/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/mkdocs/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/modules/pre-commit/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/pre-commit/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/pre-commit/"/>
+    </url>
+    <url>
+        <loc>https://nolte.github.io/taskfiles/de/references/modules/worktree/</loc>
+        <lastmod>2026-08-17</lastmod>
+        <changefreq>daily</changefreq>
+        <xhtml:link rel="alternate" hreflang="de" href="https://nolte.github.io/taskfiles/de/references/modules/worktree/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://nolte.github.io/taskfiles/references/modules/worktree/"/>
+    </url>
+</urlset>
