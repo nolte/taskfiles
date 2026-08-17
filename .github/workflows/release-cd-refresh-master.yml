@@ -5,13 +5,33 @@ on:
   # GITHUB_TOKEN — GitHub doesn't fire downstream workflows in that case
   # (Known Platform Constraint per spec/project/workflow-health/).
   workflow_dispatch:
+    inputs:
+      tag:
+        description: |
+          Tag the presentation branch is reset to (e.g. v0.1.5). Required on
+          the manual path: the reusable defaults `from_branch` to
+          `github.event.release.tag_name`, which a workflow_dispatch payload
+          does not carry, so without this input the ref resolves empty and
+          the reusable refuses to run.
+        required: true
+        type: string
 
 jobs:
   refresh_presentation_branch:
     uses: nolte/gh-plumbing/.github/workflows/reusable-release-cd-refresh-master.yml@d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be # v2.0.0
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
+      app-private-key: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY }}
     permissions:
       contents: write
     with:
       target_branch: main
+      # `inputs.tag` on the manual path, the release payload on the automatic
+      # one. Mirrors the reference wiring in nolte/gh-plumbing's own caller.
+      from_branch: ${{ inputs.tag || github.event.release.tag_name }}
+      # Forwarding the App id lets the reusable mint a short-lived
+      # installation token instead of pushing as GITHUB_TOKEN. `main` is
+      # unprotected here today, so this is an audit-trail improvement now and
+      # a hard requirement once Phase 2 of gh-plumbing#330 lands
+      # `restrictions.apps` on the presentation branch.
+      app-id: ${{ vars.PORTFOLIO_APP_ID }}
