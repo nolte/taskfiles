@@ -41,10 +41,12 @@ darauf zurückführen.
 
 Jeder Workflow unter `.github/workflows/` delegiert an einen
 wiederverwendbaren Workflow in
-[`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing). Der aktuelle
-Pin ist **`v1.1.18`**. Bei einem Bump alle Workflow-Referenzen gemeinsam
-aktualisieren, da gemischte Tags zwischen Workflows eine bekannte
-Drift-Quelle sind.
+[`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing). Jede Referenz ist
+auf einen vollständigen Commit-Digest gepinnt, mit der zugehörigen Version als
+nachgestelltem Kommentar; der aktuelle Pin ist
+**`d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be` (`v2.0.0`)**. Bei einem Bump alle
+Workflow-Referenzen gemeinsam aktualisieren, da gemischte Versionen zwischen
+Workflows eine bekannte Drift-Quelle sind.
 
 | Workflow | Wiederverwendbares Ziel |
 |----------|-------------------------|
@@ -63,8 +65,11 @@ Renovate läuft gegen dieses Repository über
 das `nolte/gh-plumbing//renovate-configs/common` an einem gepinnten Tag
 erweitert. Konkrete Erwartungen:
 
-- Alle Pins zeigen auf veröffentlichte Tags. Keine schwebenden
-  `@develop`- oder `@main`-Referenzen in `uses:`-Zeilen.
+- Alle `uses:`-Referenzen in Workflows pinnen auf einen vollständigen
+  Commit-Digest, mit der veröffentlichten Version als nachgestelltem Kommentar.
+  Keine schwebenden `@develop`- oder `@main`-Referenzen und kein blankes Tag:
+  Ein Tag lässt sich auf anderen Code umbiegen — genau das tat die
+  Kompromittierung von `tj-actions/changed-files` im März 2025.
 - Renovate gruppiert Dependency-Bumps in einen einzigen Pull Request,
   sodass Reviewer pro Zyklus einen Batch sehen.
 - Pull Requests landen über den Standard-Automerge-Pfad, sobald die
