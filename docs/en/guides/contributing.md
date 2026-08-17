@@ -77,9 +77,10 @@ the workstation playbook isn't in use.
   from `nolte/claude-shared`.
 - Pull requests run the reusable workflows from
   [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing) at a pinned
-  commit digest (currently `d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be`, which is
-  `v2.0.0`). Bump every workflow reference together when updating the pin, and
-  keep the digest form; a bare tag can be moved onto different code.
+  commit digest (currently the `v2.0.0` line; read the digest itself from
+  `.github/workflows/`, since Renovate bumps it without touching this page).
+  Bump every workflow reference together when updating the pin, and keep the
+  digest form; a bare tag can be moved onto different code.
 - Merges are squash-only and automerge once checks pass. Renovate-driven
   dependency bumps follow the same path.
 - Prose changes have to pass Vale (Microsoft + RedHat plus the

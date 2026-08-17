@@ -38,10 +38,11 @@ consumes the repository. Every documentation refactor traces back to it.
 Every workflow under `.github/workflows/` delegates to a reusable workflow
 in [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing). Each reference
 is pinned to a full-length commit digest with the corresponding version as a
-trailing comment; the current pin is
-**`d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be` (`v2.0.0`)**. Bump every workflow
-reference together when updating, because mixing versions between workflows is
-a known source of drift.
+trailing comment; the current version is **`v2.0.0`**. Read the digest from the
+workflow files themselves rather than from this page, because Renovate bumps it
+automatically and doesn't touch prose. Bump every workflow reference together
+when updating, because mixing versions between workflows is a known source of
+drift.
 
 | Workflow | Reusable target |
 |----------|-----------------|

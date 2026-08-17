@@ -43,8 +43,9 @@ Jeder Workflow unter `.github/workflows/` delegiert an einen
 wiederverwendbaren Workflow in
 [`nolte/gh-plumbing`](https://github.com/nolte/gh-plumbing). Jede Referenz ist
 auf einen vollständigen Commit-Digest gepinnt, mit der zugehörigen Version als
-nachgestelltem Kommentar; der aktuelle Pin ist
-**`d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be` (`v2.0.0`)**. Bei einem Bump alle
+nachgestelltem Kommentar; die aktuelle Version ist **`v2.0.0`**. Den Digest
+selbst bitte aus den Workflow-Dateien lesen, nicht von dieser Seite — Renovate
+bumpt ihn automatisch und fasst Prosa nicht an. Bei einem Bump alle
 Workflow-Referenzen gemeinsam aktualisieren, da gemischte Versionen zwischen
 Workflows eine bekannte Drift-Quelle sind.
 
