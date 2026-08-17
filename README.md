@@ -92,9 +92,9 @@ includes:
       PYTHON_VENV_DIR_DOCS: .venv
 ```
 
-An override only takes effect where the module declares the variable as `'{{.NAME | default "…"}}'`. A module that declares a plain literal instead wins over the value you pass and ignores the override silently. **Today only `mkdocs` is converted**; overrides against `kind`, `k8s`, `pre-commit`, `worktree`, and `asdf` are accepted but have no effect. Converting the remaining modules is tracked work; until then, treat their variables as read-only defaults.
+An override takes effect only where the module declares the variable as `'{{.NAME | default "…"}}'`. A module that declares a plain literal instead wins over the value you pass and drops the override without a word. **Today `mkdocs` alone uses that form.** The `kind`, `k8s`, `pre-commit`, `worktree`, and `asdf` modules still declare plain literals, so an override you pass them changes nothing. Treat their variables as read-only defaults until a later change converts them.
 
-An exported environment variable of the same name reaches a converted module's default too, so a `MKDOCS_PORT` set in a CI environment moves the serve port whether or not the Taskfile mentions it.
+An exported environment variable of the same name also reaches these defaults. A `MKDOCS_PORT` set in a CI environment therefore moves the serve port, even when no consumer file mentions it.
 
 The rendered [module pages](https://nolte.github.io/taskfiles/) document every task, every variable, and a copy-paste example per module.
 <!--usage-end-->
