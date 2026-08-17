@@ -32,6 +32,34 @@ jobs:
     runs-on: ubuntu-latest
     permissions: {}
     steps:
+      # The reusable's App-token mint step is `continue-on-error`, so a
+      # half-configured pair degrades silently: a rotated private key that
+      # wasn't copied into the repo secret makes the mint fail, the error is
+      # swallowed, and the push falls back to GITHUB_TOKEN — dying with the
+      # exact `refusing to allow a GitHub App ...` rejection the App token was
+      # wired in to avoid, with the real cause visible only as an annotation on
+      # a step that didn't fail. Fail here instead, where the message is plain.
+      - name: Require both App credentials or neither
+        env:
+          HAS_APP_ID: ${{ vars.PORTFOLIO_APP_ID != '' }}
+          HAS_APP_KEY: ${{ secrets.PORTFOLIO_APP_PRIVATE_KEY != '' }}
+        run: |
+          set -euo pipefail
+
+          if [ "${HAS_APP_ID}" != "${HAS_APP_KEY}" ]; then
+            echo "::error::App credentials are half-configured (PORTFOLIO_APP_ID set: ${HAS_APP_ID}," \
+                 "PORTFOLIO_APP_PRIVATE_KEY set: ${HAS_APP_KEY}). The reusable would swallow the failed" \
+                 "mint and push as GITHUB_TOKEN, which cannot write under .github/workflows/." \
+                 "Set both, or unset both to fall back deliberately." >&2
+            exit 1
+          fi
+
+          if [ "${HAS_APP_ID}" = "true" ]; then
+            echo "App credentials present; the refresh will push with an installation token."
+          else
+            echo "No App credentials configured; the refresh will push with GITHUB_TOKEN."
+          fi
+
       - name: Reject a ref that isn't a release tag
         env:
           REQUESTED_TAG: ${{ inputs.tag }}
