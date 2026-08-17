@@ -17,7 +17,47 @@ on:
         type: string
 
 jobs:
+  # The reusable resolves from_branch as tag -> origin/<branch> -> raw SHA, in
+  # that order. That flexibility is deliberate upstream, but this caller only
+  # ever wants a release tag: a mistyped `develop` would resolve to
+  # refs/remotes/origin/develop and force-push unreleased work onto the publicly
+  # linked presentation branch. Reject anything that isn't a vN.N.N tag before
+  # the refresh job runs.
+  #
+  # The job runs on both trigger paths rather than carrying `if:`, because a
+  # skipped job makes its `needs:` dependent skip too. On the release path there
+  # is nothing to check and it exits immediately.
+  validate_ref:
+    name: "Validate the requested ref"
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Reject a ref that isn't a release tag
+        env:
+          REQUESTED_TAG: ${{ inputs.tag }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+
+          if [ "${EVENT_NAME}" != "workflow_dispatch" ]; then
+            echo "Trigger is ${EVENT_NAME}; the tag comes from the release payload. Nothing to validate."
+            exit 0
+          fi
+
+          case "${REQUESTED_TAG}" in
+            v[0-9]*.[0-9]*.[0-9]*)
+              echo "Requested ref '${REQUESTED_TAG}' has the release-tag shape."
+              ;;
+            *)
+              echo "::error::'${REQUESTED_TAG}' is not a release tag (expected vN.N.N)." \
+                   "The reusable would fall back to resolving it as a branch or a raw SHA" \
+                   "and force-push that onto the presentation branch. Pass the published release tag." >&2
+              exit 1
+              ;;
+          esac
+
   refresh_presentation_branch:
+    needs: [validate_ref]
     uses: nolte/gh-plumbing/.github/workflows/reusable-release-cd-refresh-master.yml@d51e51ec3ec17ceea09fe9eb40ac00857b6fa1be # v2.0.0
     secrets:
       token: ${{ secrets.GITHUB_TOKEN }}
