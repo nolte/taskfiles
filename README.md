@@ -9,7 +9,7 @@ A curated collection of reusable [Taskfile](https://github.com/go-task/task) inc
 
 | Module | Tasks | Key variables |
 |--------|-------|---------------|
-| [mkdocs](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-mkdocs.yaml) | `start`, `build` | `MKDOCS_PORT`, `MKDOCS_BUILD_EXTRA_ARGS` |
+| [mkdocs](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-mkdocs.yaml) | `start`, `build` | `MKDOCS_PORT`, `MKDOCS_BUILD_EXTRA_ARGS`, `PYTHON_VENV_DIR_DOCS` |
 | [kind](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-kind.yaml) | `start`, `destroy`, `recreate` | `KIND_CREATE_EXTRA_ARGS` |
 | [pre-commit](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-pre-commit.yaml) | `install`, `start` | `PYTHON_VENVS_BASEDIR` |
 | [k8s](https://github.com/nolte/taskfiles/blob/main/src/taskfile-include-k8s.yaml) | `bootstrap`, `install-argocd` | `ARGOCD_EXTRA_ARGS`, `KUBECTL_TIMEOUT` |
@@ -60,7 +60,7 @@ includes:
 ### Prerequisites
 
 * [go-task](https://taskfile.dev) CLI on the `PATH`.
-* For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`.
+* For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`, or any other path passed as `PYTHON_VENV_DIR_DOCS` (see [Per-module overrides](#per-module-overrides)).
 * For `pre-commit:*`, a Python virtual environment at `~/.venvs/development`.
 * For `kind:*` and `k8s:*`, the underlying `kind`, `kubectl`, and `helm` binaries on the `PATH`.
 * For `worktree:*`, a `git` repository with an `origin` remote; optionally set `NOLTE_WORKTREE_ROOT` to choose where worktrees land (defaults to `~/repos/.worktrees`).
@@ -81,7 +81,7 @@ Replace `<tag>` with a released version from [the GitHub releases page](https://
 
 ### Per-module overrides
 
-Each module exposes a small set of `vars:` defaults. Override them with the long-form `includes:` syntax:
+Each module exposes a small set of `vars:` defaults. Override them with the long-form `includes:` syntax. A project that keeps its documentation tooling in a project-local virtual environment redirects the `mkdocs` module away from the machine-global `~/.venvs/docs` this way:
 
 ```yaml
 includes:
@@ -89,7 +89,12 @@ includes:
     taskfile: "{{.TASK_COLLECTION_BASE}}/taskfile-include-mkdocs.yaml"
     vars:
       MKDOCS_PORT: 8080
+      PYTHON_VENV_DIR_DOCS: .venv
 ```
+
+An override takes effect only where the module declares the variable as `'{{.NAME | default "…"}}'`. A module that declares a plain literal instead wins over the value you pass and drops the override without a word. **Today `mkdocs` alone uses that form.** The `kind`, `k8s`, `pre-commit`, `worktree`, and `asdf` modules still declare plain literals, so an override you pass them changes nothing. Treat their variables as read-only defaults until a later change converts them.
+
+An exported environment variable of the same name also reaches these defaults. A `MKDOCS_PORT` set in a CI environment therefore moves the serve port, even when no consumer file mentions it.
 
 The rendered [module pages](https://nolte.github.io/taskfiles/) document every task, every variable, and a copy-paste example per module.
 <!--usage-end-->
