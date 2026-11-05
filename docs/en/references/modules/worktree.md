@@ -137,6 +137,9 @@ task worktree:remove -- ci
       repository `README.md`).
     - `has an empty name after` — the branch is a bare prefix with a
       trailing slash (for example `feat/`). Add the name after the slash.
+    - `must not contain whitespace` — the quoted branch name holds a blank
+      or a tab (for example `"feat/parser fix"`). Join the words with a
+      dash, such as `feat/parser-fix`.
 - **`worktree:remove` fails without `force`.** `git worktree remove`
   refuses to drop a worktree with uncommitted or untracked files, and the
   seeded `.resume/<slug>/plan.md` counts as untracked unless the consumer
@@ -149,5 +152,14 @@ task worktree:remove -- ci
   `add` and `remove` derive `<repo>` from the remote named by the module's
   `WORKTREE_FETCH_REMOTE` setting (default `origin`) and stop before any
   fetch or filesystem write when the repository lacks it. The message lists
-  the existing remotes. Add the missing remote (`git remote add <name> …`)
-  or run inside a clone that already has it.
+  the existing remotes. Add the missing remote (`git remote add <name> <url>`)
+  or run inside a clone that already has it. Today `WORKTREE_FETCH_REMOTE`
+  is the module's fixed default: the module declares it as a plain literal,
+  so a value passed at the `includes:` site doesn't change it (see #57).
+- **`✖ Cannot derive <repo> from URL '<url>' of remote '<name>'.`**
+  `<repo>` is the last segment of the remote URL, after any trailing `/` is
+  stripped and taken after the last `/` or `:`, minus a `.git` suffix — so
+  `git@host:org/repo.git`, `git@host:repo.git` and `https://host/repo/` all
+  yield `repo`. When nothing usable is left (for example a remote URL of
+  `.`), `add` and `remove` stop before any fetch or filesystem write. Point
+  the remote at a URL that names the repository (`git remote set-url`).

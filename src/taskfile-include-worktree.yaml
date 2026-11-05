@@ -70,13 +70,16 @@ tasks:
 
         [ -n "$branch" ] || usage
 
-        # reject <message>: print a branch-rule violation plus the shared hint
-        # and abort.
+        # reject <message> [hint]: print a branch-rule violation, plus the
+        # case-specific hint when one is given, and abort.
         reject() {
           echo "✖ $1" >&2
-          echo "  The path slug may drop the prefix, but the branch MUST NOT." >&2
+          if [ -n "${2:-}" ]; then
+            echo "  $2" >&2
+          fi
           exit 1
         }
+        slug_hint="The path slug may drop the prefix, but the branch MUST NOT."
 
         # Branch-prefix rule (branching-model). The slug may drop the prefix,
         # but the branch MUST carry one of the allowed prefixes.
@@ -87,7 +90,7 @@ tasks:
         # leak, so the loop below sets a flag from a `case` only.
         prefix="${branch%%/*}"
         if [ "$prefix" = "$branch" ] || [ -z "$prefix" ]; then
-          reject "Branch '$branch' has no prefix; expected <prefix>/<name> with one of: ${allowed_prefixes}."
+          reject "Branch '$branch' has no prefix; expected <prefix>/<name> with one of: ${allowed_prefixes}." "$slug_hint"
         fi
         # Exact token match against the IFS-split list (spaces, tabs, newlines
         # all separate) — never a substring match on the joined string.
@@ -98,13 +101,17 @@ tasks:
           esac
         done
         if [ "$prefix_ok" -ne 1 ]; then
-          reject "Branch '$branch' lacks an allowed prefix (${allowed_prefixes})."
+          reject "Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." "$slug_hint"
         fi
         if [ -z "${branch#*/}" ]; then
-          reject "Branch '$branch' has an empty name after '${prefix}/'; expected <prefix>/<name>."
+          reject "Branch '$branch' has an empty name after '${prefix}/'; expected <prefix>/<name>." \
+            "Add the name after the slash, e.g. ${prefix}/parser-fix."
         fi
         case "$branch" in
-          *[[:space:]]*) reject "Branch '$branch' must not contain whitespace." ;;
+          *[[:space:]]*)
+            reject "Branch '$branch' must not contain whitespace." \
+              "Join the words with a dash instead, e.g. ${prefix}/parser-fix."
+            ;;
         esac
 
         # Default slug: branch name minus the prefix segment.
@@ -131,13 +138,41 @@ tasks:
         # `origin`. A missing remote is reported before any fetch or write; the
         # lookup sits inside an `if !` so it cannot leak under `set -e` (#50).
         if ! fetch_url="$(git remote get-url "$fetch_remote" 2>/dev/null)"; then
+          remotes="$(git remote 2>/dev/null | tr '\n' ' ')"
+          remotes="${remotes% }"
+          if [ -z "$remotes" ]; then
+            remotes="(none)"
+          fi
           echo "✖ No remote '${fetch_remote}' to derive <repo> from (WORKTREE_FETCH_REMOTE)." >&2
-          echo "  Existing remotes: $(git remote 2>/dev/null | tr '\n' ' ')" >&2
-          echo "  Add the remote, or set the module's WORKTREE_FETCH_REMOTE (and" >&2
-          echo "  WORKTREE_BASE_REF) to an existing one, then retry." >&2
+          echo "  Existing remotes: ${remotes}" >&2
+          echo "  Add it, then retry: git remote add ${fetch_remote} <url>" >&2
+          echo "  WORKTREE_FETCH_REMOTE is the module's fixed default today; an" >&2
+          echo "  includes:-site override is not honoured yet (nolte/taskfiles#57)." >&2
           exit 1
         fi
-        repo="$(basename "$fetch_url" .git)"
+        # Normalise the fetch URL to <repo>: strip trailing slashes, keep the
+        # part after the last `/` or `:` (scp-style `git@host:repo.git` has no
+        # slash), strip `.git`. A result that is not a usable directory name
+        # stops before any fetch or write.
+        # KEEP IN SYNC: `add` and `remove` carry this block verbatim, so both
+        # resolve the same <root>/<repo>/<slug>.
+        repo="$fetch_url"
+        while :; do
+          case "$repo" in
+            */) repo="${repo%/}" ;;
+            *) break ;;
+          esac
+        done
+        repo="${repo##*/}"
+        repo="${repo##*:}"
+        repo="${repo%.git}"
+        case "$repo" in
+          ""|.|..)
+            echo "✖ Cannot derive <repo> from URL '${fetch_url}' of remote '${fetch_remote}'." >&2
+            echo "  Point the remote at a URL whose last path segment names the repository." >&2
+            exit 1
+            ;;
+        esac
 
         dest="$root/$repo/$slug"
         if [ -e "$dest" ]; then
@@ -271,13 +306,41 @@ tasks:
 
         # Same <repo> derivation as `add`: the fetch remote, reported if missing.
         if ! fetch_url="$(git remote get-url "$fetch_remote" 2>/dev/null)"; then
+          remotes="$(git remote 2>/dev/null | tr '\n' ' ')"
+          remotes="${remotes% }"
+          if [ -z "$remotes" ]; then
+            remotes="(none)"
+          fi
           echo "✖ No remote '${fetch_remote}' to derive <repo> from (WORKTREE_FETCH_REMOTE)." >&2
-          echo "  Existing remotes: $(git remote 2>/dev/null | tr '\n' ' ')" >&2
-          echo "  Add the remote, or set the module's WORKTREE_FETCH_REMOTE to the" >&2
-          echo "  remote the worktree was added with, then retry." >&2
+          echo "  Existing remotes: ${remotes}" >&2
+          echo "  Add it (the remote the worktree was added with), then retry: git remote add ${fetch_remote} <url>" >&2
+          echo "  WORKTREE_FETCH_REMOTE is the module's fixed default today; an" >&2
+          echo "  includes:-site override is not honoured yet (nolte/taskfiles#57)." >&2
           exit 1
         fi
-        repo="$(basename "$fetch_url" .git)"
+        # Normalise the fetch URL to <repo>: strip trailing slashes, keep the
+        # part after the last `/` or `:` (scp-style `git@host:repo.git` has no
+        # slash), strip `.git`. A result that is not a usable directory name
+        # stops before any fetch or write.
+        # KEEP IN SYNC: `add` and `remove` carry this block verbatim, so both
+        # resolve the same <root>/<repo>/<slug>.
+        repo="$fetch_url"
+        while :; do
+          case "$repo" in
+            */) repo="${repo%/}" ;;
+            *) break ;;
+          esac
+        done
+        repo="${repo##*/}"
+        repo="${repo##*:}"
+        repo="${repo%.git}"
+        case "$repo" in
+          ""|.|..)
+            echo "✖ Cannot derive <repo> from URL '${fetch_url}' of remote '${fetch_remote}'." >&2
+            echo "  Point the remote at a URL whose last path segment names the repository." >&2
+            exit 1
+            ;;
+        esac
         dest="$root/$repo/$slug"
 
         if [ ! -e "$dest" ]; then

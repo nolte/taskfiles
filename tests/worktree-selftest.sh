@@ -3,11 +3,12 @@
 #
 # Exercises `worktree:add` against a throwaway origin/clone pair for every
 # branch prefix the module allows, plus negative cases that must be rejected
-# (missing/unknown/substring prefix, empty branch name, unsafe slug, existing
-# destination, missing arguments). The module is driven both directly (`task -t <module> add`) and
+# (missing/unknown/substring prefix, empty branch name, whitespace in the
+# branch, unsafe slug, existing destination, missing arguments). The module is driven both directly (`task -t <module> add`) and
 # through a consumer-style Taskfile that includes it (`task worktree:add`).
 # A second clone whose only remote is `upstream` checks that `add` and
-# `remove` derive <repo> from WORKTREE_FETCH_REMOTE, never from `origin` (#54).
+# `remove` derive <repo> from WORKTREE_FETCH_REMOTE, never from `origin` (#54),
+# and a third clone with rewritten remote URLs checks the URL normalisation.
 #
 # The prefix list is the value Task itself resolves for
 # WORKTREE_ALLOWED_PREFIXES (read from a `--dry --verbose` render of the
@@ -185,6 +186,20 @@ check_untouched() {
   fi
 }
 
+# check_hint <case> <fragment> <present|absent>: asserts the last run's stderr
+# does (or does not) carry <fragment>, e.g. a case-specific hint.
+check_hint() {
+  if [ "$3" = present ] && [[ "$err" != *"$2"* ]]; then
+    report FAIL "$1" "stderr lacks '$2'${err:+: $err}"
+  elif [ "$3" = absent ] && [[ "$err" == *"$2"* ]]; then
+    report FAIL "$1" "stderr unexpectedly carries '$2': $err"
+  else
+    report PASS "$1"
+  fi
+}
+
+slug_hint="the branch MUST NOT"
+
 # --- positive: every allowed prefix, directly and via the consumer wrapper --
 i=0
 for p in "${prefixes[@]}"; do
@@ -206,10 +221,12 @@ for branch in "${prefixes[0]}" /selftest; do
   i=$((i + 1))
   run_add "neg-noprefix-$i" direct "$branch"
   check_rejected "negative: $branch (no prefix)" "has no prefix"
+  check_hint "negative: $branch carries the slug hint" "$slug_hint" present
 done
 
 run_add neg-badprefix direct nope/selftest
 check_rejected "negative: nope/selftest (unknown prefix)" "lacks an allowed prefix"
+check_hint "negative: nope/selftest carries the slug hint" "$slug_hint" present
 
 run_add neg-consumer consumer nope/selftest
 check_rejected "negative (consumer): nope/selftest (unknown prefix)" "lacks an allowed prefix"
@@ -233,10 +250,23 @@ fi
 run_add neg-emptyname direct "${prefixes[0]}/"
 check_rejected "negative: ${prefixes[0]}/ (empty name)" "has an empty name after" 1
 check_untouched "negative: ${prefixes[0]}/ rejected before fetch"
+check_hint "negative: ${prefixes[0]}/ omits the slug hint" "$slug_hint" absent
 
 run_add neg-emptyname-slug direct "${prefixes[0]}/" custom-slug
 check_rejected "negative: ${prefixes[0]}/ custom-slug (empty name)" "has an empty name after" 1
 check_untouched "negative: ${prefixes[0]}/ custom-slug rejected before fetch"
+
+# --- negative: whitespace inside the branch name ---------------------------
+# go-task hands `-- "<a b>"` through as one quoted argument, so the branch
+# itself carries the blank/tab and must be rejected before any fetch.
+i=0
+for branch in "${prefixes[0]}/a b" "${prefixes[0]}/a"$'\t'"b"; do
+  i=$((i + 1))
+  run_add "neg-space-$i" direct "$branch"
+  check_rejected "negative: '$branch' (whitespace)" "must not contain whitespace" 1
+  check_untouched "negative: '$branch' rejected before fetch"
+  check_hint "negative: '$branch' omits the slug hint" "$slug_hint" absent
+done
 
 # --- negative: unsafe slug --------------------------------------------------
 i=0
@@ -324,9 +354,49 @@ missing_msg="No remote 'origin' to derive <repo> from (WORKTREE_FETCH_REMOTE)"
 run_clone="$work/clone-upstream" run_add neg-noremote direct "${prefixes[0]}/selftest-noremote"
 check_rejected "negative: add without the fetch remote" "$missing_msg" 1
 check_untouched "negative: add without the fetch remote creates nothing"
+# Actionable hint, and the remotes list carries no trailing blank.
+check_hint "negative: add without the fetch remote names the fix" "git remote add origin <url>" present
+check_hint "negative: add without the fetch remote lists remotes exactly" $'Existing remotes: upstream\n' present
 
 run_clone="$work/clone-upstream" run_remove neg-noremote-rm selftest-noremote
 check_rejected "negative: remove without the fetch remote" "$missing_msg" 1
+
+# --- <repo> derivation normalises the remote URL ---------------------------
+# A dedicated clone whose `origin` URL is rewritten with `git remote set-url`
+# to local paths that still fetch. A trailing slash must not leak into <repo>;
+# a `:` in the last segment is treated like scp form (`git@host:repo.git`), so
+# <repo> is the part after it; `.` yields no usable name and must stop.
+git clone -q "$work/origin.git" "$work/mirror:scp-repo.git" --bare
+git clone -q "$work/origin.git" "$work/clone-url"
+
+# url_case <root-id> <url> <branch> <slug> <repo>: points origin at <url>,
+# adds <branch>, expects $root/<repo>/<slug>, then removes it again.
+url_case() {
+  git -C "$work/clone-url" remote set-url origin "$2"
+  run_clone="$work/clone-url" run_add "$1" direct "$3" "$4"
+  run_repo="$5" check_created "positive (remote URL '$2'): <repo> is '$5'" "$4"
+  run_clone="$work/clone-url" run_remove "$1" "$4" force
+  if [ "$rc" -ne 0 ]; then
+    report FAIL "positive (remote URL '$2'): remove" "exit $rc${err:+, stderr: $err}"
+  elif [ -e "$root/$5/$4" ]; then
+    report FAIL "positive (remote URL '$2'): remove" "worktree still present"
+  else
+    report PASS "positive (remote URL '$2'): remove"
+  fi
+}
+url_case url-slash "$work/upstream-repo.git/" "${prefixes[0]}/selftest-url-slash" url-slash upstream-repo
+url_case url-scp "$work/mirror:scp-repo.git" "${prefixes[0]}/selftest-url-scp" url-scp scp-repo
+url_case url-scp-slash "$work/mirror:scp-repo.git//" "${prefixes[0]}/selftest-url-scp-slash" url-scp-slash scp-repo
+
+# `.` (the clone itself) still fetches, but names no repository: add must stop
+# before any fetch or write, and remove must refuse to resolve a path.
+git -C "$work/clone-url" remote set-url origin .
+bad_url_msg="Cannot derive <repo> from URL '.' of remote 'origin'"
+run_clone="$work/clone-url" run_add neg-url-dot direct "${prefixes[0]}/selftest-url-dot"
+check_rejected "negative: remote URL '.' (add)" "$bad_url_msg" 1
+check_untouched "negative: remote URL '.' creates nothing"
+run_clone="$work/clone-url" run_remove neg-url-dot-rm selftest-url-dot
+check_rejected "negative: remote URL '.' (remove)" "$bad_url_msg" 1
 
 # --- negative: missing arguments -> usage, exit 2 ---------------------------
 run_add neg-usage direct
