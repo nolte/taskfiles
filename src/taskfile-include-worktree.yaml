@@ -73,22 +73,23 @@ tasks:
         # Branch-prefix rule (branching-model). The slug may drop the prefix,
         # but the branch MUST carry one of the allowed prefixes.
         prefix="${branch%%/*}"
-        ok=0
-        # NOTE: the loop body is deliberately an `if`, not a bare `a && b && c`
-        # list. The embedded shell (mvdan/sh, as shipped with go-task) lets a
-        # false `&&` list in the final iteration leak out as the loop's exit
-        # status and aborts under `set -e` — bash exempts it — so every prefix
-        # except the last allowed one failed silently.
-        for p in $allowed_prefixes; do
-          if [ "$prefix" = "$p" ] && [ "$prefix" != "$branch" ]; then
-            ok=1
-          fi
-        done
-        if [ "$ok" -ne 1 ]; then
-          echo "✖ Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." >&2
+        # NOTE: no loop and no bare `a && b` list on purpose. The embedded
+        # shell (mvdan/sh, as shipped with go-task) lets a false `&&`/`||` list
+        # that ends a compound command leak out as its exit status and aborts
+        # under `set -e` — bash exempts it (#50). `if`/`case` never leak.
+        if [ "$prefix" = "$branch" ] || [ -z "$prefix" ]; then
+          echo "✖ Branch '$branch' has no prefix; expected <prefix>/<name> with one of: ${allowed_prefixes}." >&2
           echo "  The path slug may drop the prefix, but the branch MUST NOT." >&2
           exit 1
         fi
+        case " $allowed_prefixes " in
+          *" $prefix "*) ;;
+          *)
+            echo "✖ Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." >&2
+            echo "  The path slug may drop the prefix, but the branch MUST NOT." >&2
+            exit 1
+            ;;
+        esac
 
         # Default slug: branch name minus the prefix segment.
         [ -n "$slug" ] || slug="${branch#*/}"

@@ -124,7 +124,14 @@ task worktree:remove -- ci
 
 - **`worktree:add` lehnt den Branch ab.** Der Branch muss einen der Prefixes
   aus `WORKTREE_ALLOWED_PREFIXES` tragen (Default `feat fix chore docs exp`).
-  Der Slug darf den Prefix weglassen, der Branch nicht.
+  Der Slug darf den Prefix weglassen, der Branch nicht. Die Fehlermeldung
+  nennt die Ursache:
+    - `has no prefix` — der Branch hat überhaupt kein `<prefix>/`-Segment
+      (etwa `parser-fix` oder ein nacktes `feat`). Den vollen Namen angeben,
+      etwa `feat/parser-fix`.
+    - `lacks an allowed prefix` — der Branch hat einen Prefix, der aber nicht
+      in `WORKTREE_ALLOWED_PREFIXES` steht (etwa `wip/parser-fix`). Einen
+      erlaubten Prefix verwenden oder `WORKTREE_ALLOWED_PREFIXES` erweitern.
 - **`worktree:remove` scheitert ohne `force`.** `git worktree remove`
   weigert sich, einen Worktree mit nicht committeten oder untracked Dateien
   zu entfernen — und der angelegte `.resume/<slug>/plan.md` zählt als

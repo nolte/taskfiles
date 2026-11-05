@@ -121,7 +121,14 @@ task worktree:remove -- ci
 
 - **`worktree:add` rejects the branch.** The branch must carry one of the
   prefixes in `WORKTREE_ALLOWED_PREFIXES` (default `feat fix chore docs
-  exp`). The slug may drop the prefix, but the branch must not.
+  exp`). The slug may drop the prefix, but the branch must not. The error
+  names the cause:
+    - `has no prefix` — the branch has no `<prefix>/` segment at all (for
+      example `parser-fix` or a bare `feat`). Pass the full name, such as
+      `feat/parser-fix`.
+    - `lacks an allowed prefix` — the branch has a prefix, but it isn't in
+      `WORKTREE_ALLOWED_PREFIXES` (for example `wip/parser-fix`). Use an
+      allowed prefix, or extend `WORKTREE_ALLOWED_PREFIXES`.
 - **`worktree:remove` fails without `force`.** `git worktree remove`
   refuses to drop a worktree with uncommitted or untracked files, and the
   seeded `.resume/<slug>/plan.md` counts as untracked unless the consumer
