@@ -140,6 +140,20 @@ task worktree:remove -- ci
     - `must not contain whitespace`: the quoted branch name holds a blank
       or a tab (for example `"feat/parser fix"`). Join the words with a
       dash, such as `feat/parser-fix`.
+    - `is not a valid git branch name`: the name breaks git's ref-name
+      rules (`git check-ref-format`), for example `feat/x~1`,
+      `feat/x.lock`, `feat/x:y`, `feat/a..b` or a trailing slash as in
+      `feat/x/`. `add` stops before the fetch. Drop the offending
+      characters, such as `feat/x-1`.
+- **`✖ Slug '<slug>' must be a single kebab-case path segment.`** The slug
+  names one directory under `<root>/<repo>/`, so `add` and `remove` reject a
+  slug with a `/` or `..`, a leading `.` or `-`, and the bare `.` (which
+  would make `<root>/<repo>` itself the worktree). Pass a plain name, such
+  as `parser-fix`.
+- **`✖ Not inside a git repository: <dir>`.** `add` and `remove` derive
+  `<repo>` from the current checkout, so they stop before any fetch or
+  filesystem write when the working directory belongs to no repository.
+  Change into a clone of the repository and retry.
 - **`worktree:remove` fails without `force`.** `git worktree remove`
   refuses to drop a worktree with uncommitted or untracked files, and the
   seeded `.resume/<slug>/plan.md` counts as untracked unless the consumer

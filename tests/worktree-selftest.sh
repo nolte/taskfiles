@@ -4,8 +4,10 @@
 # Exercises `worktree:add` against a throwaway origin/clone pair for every
 # branch prefix the module allows, plus negative cases that must be rejected
 # (missing/unknown/substring prefix, empty branch name, whitespace in the
-# branch, unsafe slug, existing destination, missing arguments). The module is driven both directly (`task -t <module> add`) and
-# through a consumer-style Taskfile that includes it (`task worktree:add`).
+# branch, a name git refuses as a branch, unsafe slug including `.`, existing
+# destination, running outside a repository, missing arguments). The module
+# is driven both directly (`task -t <module> add`) and through a
+# consumer-style Taskfile that includes it (`task worktree:add`).
 # A second clone whose only remote is `upstream` checks that `add` and
 # `remove` derive <repo> from WORKTREE_FETCH_REMOTE, never from `origin` (#54),
 # and a third clone with rewritten remote URLs checks the URL normalisation.
@@ -268,6 +270,19 @@ for branch in "${prefixes[0]}/a b" "${prefixes[0]}/a"$'\t'"b"; do
   check_hint "negative: '$branch' omits the slug hint" "$slug_hint" absent
 done
 
+# --- negative: name git refuses as a branch ---------------------------------
+# Passes every prefix/whitespace check, but `git worktree add -b` would die on
+# it. It must be rejected before the banner, the fetch, or any write. A
+# trailing slash counts as an invalid branch, never as a slug problem.
+i=0
+for branch in "${prefixes[0]}/x~1" "${prefixes[0]}/x.lock" "${prefixes[0]}/x/" \
+  "${prefixes[0]}/x:y" "${prefixes[0]}/a..b"; do
+  i=$((i + 1))
+  run_add "neg-refname-$i" direct "$branch"
+  check_rejected "negative: '$branch' (invalid branch name)" "is not a valid git branch name" 1
+  check_untouched "negative: '$branch' rejected before fetch"
+done
+
 # --- negative: unsafe slug --------------------------------------------------
 i=0
 for slug in a/b ..x; do
@@ -275,6 +290,21 @@ for slug in a/b ..x; do
   run_add "neg-slug-$i" direct "${prefixes[0]}/selftest" "$slug"
   check_rejected "negative: ${prefixes[0]}/selftest $slug (unsafe slug)" "must be a single kebab-case path segment"
 done
+
+# `.` would turn <root>/<repo> itself into the worktree.
+run_add neg-slug-dot direct "${prefixes[0]}/selftest-dot" .
+check_rejected "negative: ${prefixes[0]}/selftest-dot . (slug '.')" "must be a single kebab-case path segment" 1
+check_untouched "negative: slug '.' creates nothing"
+
+# remove must refuse `.` too, even where <root>/<repo> exists (pos-1 holds a
+# worktree), and leave that worktree in place.
+run_remove pos-1 .
+check_rejected "negative: remove slug '.'" "must be a single path segment" 1
+if [ -d "$root/origin/selftest" ]; then
+  report PASS "negative: remove slug '.' leaves the existing worktree"
+else
+  report FAIL "negative: remove slug '.' leaves the existing worktree" "missing: $root/origin/selftest"
+fi
 
 # --- negative: destination already exists -----------------------------------
 # Same branch and slug twice in one root: the destination check runs before
@@ -397,6 +427,22 @@ check_rejected "negative: remote URL '.' (add)" "$bad_url_msg" 1
 check_untouched "negative: remote URL '.' creates nothing"
 run_clone="$work/clone-url" run_remove neg-url-dot-rm selftest-url-dot
 check_rejected "negative: remote URL '.' (remove)" "$bad_url_msg" 1
+
+# --- negative: outside a git repository -------------------------------------
+# A plain directory; GIT_CEILING_DIRECTORIES stops git from finding a
+# repository above it should $TMPDIR itself sit inside one. Both tasks must
+# name the cause (no silent git exit 128) before any fetch or write.
+mkdir -p "$work/norepo"
+norepo_msg="Not inside a git repository: "
+GIT_CEILING_DIRECTORIES="$work" run_clone="$work/norepo" \
+  run_add neg-norepo direct "${prefixes[0]}/selftest-norepo"
+check_rejected "negative: add outside a repository" "$norepo_msg" 1
+check_untouched "negative: add outside a repository creates nothing"
+
+GIT_CEILING_DIRECTORIES="$work" run_clone="$work/norepo" \
+  run_remove neg-norepo-rm selftest-norepo
+check_rejected "negative: remove outside a repository" "$norepo_msg" 1
+check_untouched "negative: remove outside a repository touches nothing"
 
 # --- negative: missing arguments -> usage, exit 2 ---------------------------
 run_add neg-usage direct

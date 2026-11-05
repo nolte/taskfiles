@@ -144,6 +144,21 @@ task worktree:remove -- ci
     - `must not contain whitespace` — der gequotete Branch-Name enthält ein
       Leerzeichen oder einen Tab (etwa `"feat/parser fix"`). Die Wörter mit
       einem Bindestrich verbinden, etwa `feat/parser-fix`.
+    - `is not a valid git branch name` — der Name verletzt die
+      Ref-Namensregeln von git (`git check-ref-format`), etwa `feat/x~1`,
+      `feat/x.lock`, `feat/x:y`, `feat/a..b` oder ein abschließender
+      Schrägstrich wie in `feat/x/`. `add` bricht vor dem Fetch ab. Die
+      unzulässigen Zeichen entfernen, etwa `feat/x-1`.
+- **`✖ Slug '<slug>' must be a single kebab-case path segment.`** Der Slug
+  benennt genau ein Verzeichnis unter `<root>/<repo>/`. `add` und `remove`
+  lehnen daher einen Slug mit `/` oder `..`, mit führendem `.` oder `-` sowie
+  das nackte `.` ab (das `<root>/<repo>` selbst zum Worktree machen würde).
+  Einen einfachen Namen übergeben, etwa `parser-fix`.
+- **`✖ Not inside a git repository: <dir>`.** `add` und `remove` leiten
+  `<repo>` aus dem aktuellen Checkout ab und brechen daher vor jedem Fetch
+  und jedem Schreibzugriff ab, wenn das Arbeitsverzeichnis zu keinem
+  Repository gehört. In einen Clone des Repositorys wechseln und erneut
+  ausführen.
 - **`worktree:remove` scheitert ohne `force`.** `git worktree remove`
   weigert sich, einen Worktree mit nicht committeten oder untracked Dateien
   zu entfernen — und der angelegte `.resume/<slug>/plan.md` zählt als
