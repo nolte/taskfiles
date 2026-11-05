@@ -74,8 +74,15 @@ tasks:
         # but the branch MUST carry one of the allowed prefixes.
         prefix="${branch%%/*}"
         ok=0
+        # NOTE: the loop body is deliberately an `if`, not a bare `a && b && c`
+        # list. The embedded shell (mvdan/sh, as shipped with go-task) lets a
+        # false `&&` list in the final iteration leak out as the loop's exit
+        # status and aborts under `set -e` — bash exempts it — so every prefix
+        # except the last allowed one failed silently.
         for p in $allowed_prefixes; do
-          [ "$prefix" = "$p" ] && [ "$prefix" != "$branch" ] && ok=1
+          if [ "$prefix" = "$p" ] && [ "$prefix" != "$branch" ]; then
+            ok=1
+          fi
         done
         if [ "$ok" -ne 1 ]; then
           echo "✖ Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." >&2
