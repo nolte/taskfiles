@@ -21,3 +21,13 @@ tasks:
     desc: Serve the mkdocs site locally
     cmds:
       - task: mkdocs:start
+
+  test:
+    desc: Run the repository self-tests (worktree:add prefix regression guard)
+    cmds:
+      - task: test:worktree
+
+  test:worktree:
+    desc: Exercise worktree:add for every allowed prefix against a throwaway repo
+    cmds:
+      - bash ./tests/worktree-selftest.sh
