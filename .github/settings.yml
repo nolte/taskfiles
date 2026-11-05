@@ -8,3 +8,29 @@ repository:
   description: Collection of reusable Taskfiles
   homepage: https://nolte.github.io/taskfiles
   topics: task
+
+# Required checks on develop. The commons config leaves `contexts` empty and
+# expects each consumer to declare its own:
+#   - "static / Static CI Tests": job `static` in build-static-tests.yaml,
+#     which calls the gh-plumbing reusable pre-commit workflow.
+#   - "task test": job `test` (named "task test") in ci.yml, which runs the
+#     repository's own `task test` self-tests.
+# The entry repeats every commons field verbatim on purpose: the current
+# Settings app source (probot 14) drops its `arrayMerge` option, so arrays from
+# `_extends` are concatenated, not merged by name, and this entry is applied
+# as a complete branch-protection payload of its own. Never drop a field here.
+branches:
+  - name: develop
+    protection:
+      required_pull_request_reviews: null
+      required_status_checks:
+        strict: true
+        contexts:
+          - "static / Static CI Tests"
+          - "task test"
+      enforce_admins: true
+      restrictions:
+        users: []
+        teams: []
+        apps:
+          - nolte-portfolio-app

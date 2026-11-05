@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [develop]
+
+# Least-privilege default, per spec/project/github-actions-best-practices/ §B.
+permissions:
+  contents: read
+
+# Pull requests supersede their own stale runs; every push to develop gets a
+# group of its own (run_id), so no post-merge verdict is ever cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+# Stages of spec/project/continuous-integration/ §A deliberately absent here:
+#   - lint: pre-commit already runs via build-static-tests.yaml (static / Static CI Tests).
+#   - build/package: this repository ships no build artifact; the YAML files are the product.
+#   - supply-chain scan: trivy and chain-bench run via build-static-tests.yaml.
+jobs:
+  test:
+    name: task test
+    # Versioned label, not ubuntu-latest: the self-test depends on the image's
+    # git and bash (spec/project/continuous-integration/ §C, no floating refs).
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Pinned exactly, not 3.x: the self-test asserts shell behaviour of
+      # go-task's embedded interpreter (mvdan/sh), which changes between
+      # releases (nolte/taskfiles#50). Renovate bumps this pin through the
+      # go-task customManager in renovate.json5, which matches the uses line
+      # below together with its version input.
+      - name: Set up Task
+        uses: go-task/setup-task@a00fbb05ce67b35648be3c78cbc9fd85354c757e # v2.2.0
+        with:
+          version: 3.52.0
+
+      # Same target a contributor runs locally (spec/project/taskfile/ §Local and CI parity).
+      - name: Run the self-tests
+        run: task test
