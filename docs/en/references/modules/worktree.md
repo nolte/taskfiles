@@ -22,8 +22,9 @@ apply across every module.
 
 ## Prerequisites
 
-- `git` on the `PATH`, run from inside a repository that has an `origin`
-  remote. The module derives `<repo>` from `origin`, never from the current
+- `git` on the `PATH`, run from inside a repository that has the remote named
+  by the module's `WORKTREE_FETCH_REMOTE` setting (default `origin`). The
+  module derives `<repo>` from that remote's URL, never from the current
   working directory.
 - Optionally, the `NOLTE_WORKTREE_ROOT` environment variable to choose where
   worktrees land. It wins over the `WORKTREE_ROOT_DEFAULT` variable at
@@ -37,9 +38,10 @@ Every worktree lands in the same predictable place:
 ${NOLTE_WORKTREE_ROOT:-~/repos/.worktrees}/<repo>/<slug>/
 ```
 
-`<repo>` comes from the `origin` remote and `<slug>` is a single
-kebab-case path segment (the branch name with its prefix stripped, unless
-you pass one explicitly).
+`<repo>` comes from the URL of the remote named by `WORKTREE_FETCH_REMOTE`
+(default `origin`), the same remote the base ref is fetched from, and
+`<slug>` is a single kebab-case path segment (the branch name with its prefix
+stripped, unless you pass one explicitly).
 
 ## Tasks
 
@@ -67,7 +69,7 @@ control.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `WORKTREE_BASE_REF` | `origin/develop` | Ref new branches are cut from. |
-| `WORKTREE_FETCH_REMOTE` | `origin` | Remote fetched before the worktree is created. |
+| `WORKTREE_FETCH_REMOTE` | `origin` | Remote fetched before the worktree is created; `<repo>` is derived from its URL. |
 | `WORKTREE_FETCH_BRANCH` | `develop` | Branch fetched before the worktree is created. |
 | `WORKTREE_ALLOWED_PREFIXES` | `feat fix chore docs exp` | Space-separated branch prefixes accepted by `add`. |
 | `WORKTREE_ROOT_DEFAULT` | `~/repos/.worktrees` | Fallback root when `NOLTE_WORKTREE_ROOT` is unset. |
@@ -143,6 +145,9 @@ task worktree:remove -- ci
 - **The worktree landed in the wrong place.** The root is
   `NOLTE_WORKTREE_ROOT` if set, otherwise `WORKTREE_ROOT_DEFAULT`. Run
   `task worktree:root` to see the resolved value for the current machine.
-- **`origin` not found.** The module derives `<repo>` from the `origin`
-  remote. Add one (`git remote add origin …`) or run inside a clone that
-  already has it.
+- **`✖ No remote '<name>' to derive <repo> from (WORKTREE_FETCH_REMOTE).`**
+  `add` and `remove` derive `<repo>` from the remote named by the module's
+  `WORKTREE_FETCH_REMOTE` setting (default `origin`) and stop before any
+  fetch or filesystem write when the repository lacks it. The message lists
+  the existing remotes. Add the missing remote (`git remote add <name> …`)
+  or run inside a clone that already has it.

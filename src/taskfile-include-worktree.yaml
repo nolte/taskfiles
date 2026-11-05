@@ -126,9 +126,18 @@ tasks:
           "~/"*) root="$HOME/${root#\~/}" ;;
         esac
 
-        # Derive <repo> from the origin remote — never inferred from the cwd.
-        origin_url="$(git remote get-url origin)"
-        repo="$(basename "$origin_url" .git)"
+        # Derive <repo> from the fetch remote — the same remote the base ref is
+        # fetched from, never inferred from the cwd and never a hard-coded
+        # `origin`. A missing remote is reported before any fetch or write; the
+        # lookup sits inside an `if !` so it cannot leak under `set -e` (#50).
+        if ! fetch_url="$(git remote get-url "$fetch_remote" 2>/dev/null)"; then
+          echo "✖ No remote '${fetch_remote}' to derive <repo> from (WORKTREE_FETCH_REMOTE)." >&2
+          echo "  Existing remotes: $(git remote 2>/dev/null | tr '\n' ' ')" >&2
+          echo "  Add the remote, or set the module's WORKTREE_FETCH_REMOTE (and" >&2
+          echo "  WORKTREE_BASE_REF) to an existing one, then retry." >&2
+          exit 1
+        fi
+        repo="$(basename "$fetch_url" .git)"
 
         dest="$root/$repo/$slug"
         if [ -e "$dest" ]; then
@@ -239,6 +248,7 @@ tasks:
         set -euo pipefail
 
         root_default="{{.WORKTREE_ROOT_DEFAULT}}"
+        fetch_remote="{{.WORKTREE_FETCH_REMOTE}}"
 
         set -- {{.CLI_ARGS}}
         slug="${1:-}"
@@ -259,8 +269,15 @@ tasks:
           "~/"*) root="$HOME/${root#\~/}" ;;
         esac
 
-        origin_url="$(git remote get-url origin)"
-        repo="$(basename "$origin_url" .git)"
+        # Same <repo> derivation as `add`: the fetch remote, reported if missing.
+        if ! fetch_url="$(git remote get-url "$fetch_remote" 2>/dev/null)"; then
+          echo "✖ No remote '${fetch_remote}' to derive <repo> from (WORKTREE_FETCH_REMOTE)." >&2
+          echo "  Existing remotes: $(git remote 2>/dev/null | tr '\n' ' ')" >&2
+          echo "  Add the remote, or set the module's WORKTREE_FETCH_REMOTE to the" >&2
+          echo "  remote the worktree was added with, then retry." >&2
+          exit 1
+        fi
+        repo="$(basename "$fetch_url" .git)"
         dest="$root/$repo/$slug"
 
         if [ ! -e "$dest" ]; then

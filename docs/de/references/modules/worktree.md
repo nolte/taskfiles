@@ -24,9 +24,10 @@ die modulübergreifend gelten.
 
 ## Voraussetzungen
 
-- `git` im `PATH`, ausgeführt innerhalb eines Repositories mit einem
-  `origin`-Remote — `<repo>` wird aus `origin` abgeleitet, nie aus dem
-  Arbeitsverzeichnis geraten.
+- `git` im `PATH`, ausgeführt innerhalb eines Repositories mit dem Remote,
+  das die Modul-Einstellung `WORKTREE_FETCH_REMOTE` benennt (Default
+  `origin`) — `<repo>` wird aus der URL dieses Remotes abgeleitet, nie aus
+  dem Arbeitsverzeichnis geraten.
 - Optional die Umgebungsvariable `NOLTE_WORKTREE_ROOT`, um festzulegen, wo
   Worktrees landen. Sie gewinnt zur Laufzeit gegen die Variable
   `WORKTREE_ROOT_DEFAULT`; beide haben den Default `~/repos/.worktrees`.
@@ -39,9 +40,10 @@ Jeder Worktree landet am selben vorhersehbaren Ort:
 ${NOLTE_WORKTREE_ROOT:-~/repos/.worktrees}/<repo>/<slug>/
 ```
 
-`<repo>` stammt aus dem `origin`-Remote und `<slug>` ist ein einzelnes
-kebab-case-Pfadsegment (der Branch-Name ohne Prefix, sofern nicht explizit
-angegeben).
+`<repo>` stammt aus der URL des Remotes, das `WORKTREE_FETCH_REMOTE` benennt
+(Default `origin`; dasselbe Remote, aus dem der Basis-Ref gefetcht wird), und
+`<slug>` ist ein einzelnes kebab-case-Pfadsegment (der Branch-Name ohne
+Prefix, sofern nicht explizit angegeben).
 
 ## Tasks
 
@@ -70,7 +72,7 @@ Er liegt unter `.resume/`; dieses Verzeichnis hält das Konsument-Repository
 | Variable | Default | Zweck |
 |----------|---------|-------|
 | `WORKTREE_BASE_REF` | `origin/develop` | Ref, aus dem neue Branches geschnitten werden. |
-| `WORKTREE_FETCH_REMOTE` | `origin` | Remote, das vor dem Erstellen des Worktrees gefetcht wird. |
+| `WORKTREE_FETCH_REMOTE` | `origin` | Remote, das vor dem Erstellen des Worktrees gefetcht wird; `<repo>` wird aus seiner URL abgeleitet. |
 | `WORKTREE_FETCH_BRANCH` | `develop` | Branch, der vor dem Erstellen des Worktrees gefetcht wird. |
 | `WORKTREE_ALLOWED_PREFIXES` | `feat fix chore docs exp` | Leerzeichengetrennte Branch-Prefixes, die `add` akzeptiert. |
 | `WORKTREE_ROOT_DEFAULT` | `~/repos/.worktrees` | Fallback-Root, wenn `NOLTE_WORKTREE_ROOT` nicht gesetzt ist. |
@@ -148,6 +150,10 @@ task worktree:remove -- ci
 - **Der Worktree landete am falschen Ort.** Der Root ist
   `NOLTE_WORKTREE_ROOT`, falls gesetzt, sonst `WORKTREE_ROOT_DEFAULT`. Mit
   `task worktree:root` den aufgelösten Wert der aktuellen Maschine anzeigen.
-- **`origin` nicht gefunden.** Das Modul leitet `<repo>` aus dem
-  `origin`-Remote ab. Eines hinzufügen (`git remote add origin …`) oder
-  innerhalb eines Clones ausführen, der es bereits hat.
+- **`✖ No remote '<name>' to derive <repo> from (WORKTREE_FETCH_REMOTE).`**
+  `add` und `remove` leiten `<repo>` aus dem Remote ab, das die
+  Modul-Einstellung `WORKTREE_FETCH_REMOTE` benennt (Default `origin`), und
+  brechen vor jedem Fetch und jedem Schreibzugriff ab, wenn das Repository
+  es nicht hat. Die Meldung listet die vorhandenen Remotes. Das fehlende
+  Remote hinzufügen (`git remote add <name> …`) oder innerhalb eines Clones
+  ausführen, der es bereits hat.

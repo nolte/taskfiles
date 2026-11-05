@@ -6,6 +6,8 @@
 # (missing/unknown/substring prefix, empty branch name, unsafe slug, existing
 # destination, missing arguments). The module is driven both directly (`task -t <module> add`) and
 # through a consumer-style Taskfile that includes it (`task worktree:add`).
+# A second clone whose only remote is `upstream` checks that `add` and
+# `remove` derive <repo> from WORKTREE_FETCH_REMOTE, never from `origin` (#54).
 #
 # The prefix list is the value Task itself resolves for
 # WORKTREE_ALLOWED_PREFIXES (read from a `--dry --verbose` render of the
@@ -91,7 +93,8 @@ report() { # <status> <case> [detail]
 
 # run_add <root-id> <direct|consumer> [args...]: runs `worktree:add` in the
 # clone with the worktree root $work/roots/<root-id> (reused across calls with
-# the same id). The module under test is $run_module when set, else $module.
+# the same id). The module under test is $run_module when set, else $module;
+# the checkout it runs in is $run_clone when set, else $work/clone.
 # `task -x` passes the script's own exit status through instead
 # of go-task's generic 201. Sets rc, out, err, root.
 runs=0
@@ -107,7 +110,7 @@ run_add() {
     (cd "$work/clone" && NOLTE_WORKTREE_ROOT="$root" \
       task -x worktree:add -- "$@" >"$log.out" 2>"$log.err" </dev/null)
   else
-    (cd "$work/clone" && NOLTE_WORKTREE_ROOT="$root" \
+    (cd "${run_clone:-$work/clone}" && NOLTE_WORKTREE_ROOT="$root" \
       task -x -t "${run_module:-$module}" add -- "$@" >"$log.out" 2>"$log.err" </dev/null)
   fi
   rc=$?
@@ -116,10 +119,30 @@ run_add() {
   err="$(cat "$log.err")"
 }
 
+# run_remove <root-id> [args...]: runs `worktree:remove` directly against the
+# module, honouring $run_module and $run_clone like run_add. Sets rc, out,
+# err, root.
+run_remove() {
+  local id="$1"
+  shift
+  root="$work/roots/$id"
+  runs=$((runs + 1))
+  local log="$work/logs/$runs"
+  mkdir -p "$root" "$work/logs"
+  set +e
+  (cd "${run_clone:-$work/clone}" && NOLTE_WORKTREE_ROOT="$root" \
+    task -x -t "${run_module:-$module}" remove -- "$@" >"$log.out" 2>"$log.err" </dev/null)
+  rc=$?
+  set -e
+  out="$(cat "$log.out")"
+  err="$(cat "$log.err")"
+}
+
 # check_created <case> <slug>: asserts the last run_add created a worktree
-# with its plan stub under "$root/origin/<slug>".
+# with its plan stub under "$root/<repo>/<slug>", where <repo> is $run_repo
+# when set, else `origin` (the bare repo the default clone points at).
 check_created() {
-  local dest="$root/origin/$2"
+  local dest="$root/${run_repo:-origin}/$2"
   if [ "$rc" -ne 0 ]; then
     report FAIL "$1" "exit $rc${err:+, stderr: $err}"
   elif [[ "$out" != *"→ Worktree root"* ]]; then
@@ -258,6 +281,52 @@ if [ "${#prefixes[@]}" -ge 2 ]; then
     check_rejected "negative (padded list): nope/selftest-ws" "lacks an allowed prefix" 1
   fi
 fi
+
+# --- <repo> follows WORKTREE_FETCH_REMOTE, not a hard-coded origin (#54) -----
+# A second clone whose only remote is `upstream`, pointing at a bare repo named
+# `upstream-repo.git`, so the derived <repo> is distinguishable from `origin`.
+git clone -q "$work/origin.git" "$work/upstream-repo.git" --bare
+git clone -q "$work/upstream-repo.git" "$work/clone-upstream"
+git -C "$work/clone-upstream" remote rename origin upstream
+up_module="$work/module-upstream.yaml"
+sed -e "s|^\([[:space:]]*WORKTREE_FETCH_REMOTE:\).*|\1 \"upstream\"|" \
+  -e "s|^\([[:space:]]*WORKTREE_BASE_REF:\).*|\1 \"upstream/develop\"|" \
+  "$module" >"$up_module"
+if ! grep -q '^[[:space:]]*WORKTREE_FETCH_REMOTE: "upstream"$' "$up_module" ||
+  ! grep -q '^[[:space:]]*WORKTREE_BASE_REF: "upstream/develop"$' "$up_module"; then
+  report FAIL "fetch remote upstream: setup" "no WORKTREE_FETCH_REMOTE/WORKTREE_BASE_REF line to rewrite in $module"
+else
+  up_branch="${prefixes[0]}/selftest-upstream"
+  run_clone="$work/clone-upstream" run_module="$up_module" run_repo=upstream-repo \
+    run_add pos-upstream direct "$up_branch"
+  run_repo=upstream-repo check_created "positive (fetch remote upstream): $up_branch" selftest-upstream
+  if [ -e "$root/origin" ]; then
+    report FAIL "positive (fetch remote upstream): not named after origin" "found $root/origin"
+  else
+    report PASS "positive (fetch remote upstream): not named after origin"
+  fi
+
+  run_clone="$work/clone-upstream" run_module="$up_module" \
+    run_remove pos-upstream selftest-upstream force
+  if [ "$rc" -ne 0 ]; then
+    report FAIL "positive (fetch remote upstream): remove" "exit $rc${err:+, stderr: $err}"
+  elif [ -e "$root/upstream-repo/selftest-upstream" ]; then
+    report FAIL "positive (fetch remote upstream): remove" "worktree still present"
+  else
+    report PASS "positive (fetch remote upstream): remove"
+  fi
+fi
+
+# Default module (fetch remote `origin`) in the upstream-only clone: <repo>
+# cannot be derived, so add and remove must stop with the missing-remote
+# message before any fetch or filesystem write.
+missing_msg="No remote 'origin' to derive <repo> from (WORKTREE_FETCH_REMOTE)"
+run_clone="$work/clone-upstream" run_add neg-noremote direct "${prefixes[0]}/selftest-noremote"
+check_rejected "negative: add without the fetch remote" "$missing_msg" 1
+check_untouched "negative: add without the fetch remote creates nothing"
+
+run_clone="$work/clone-upstream" run_remove neg-noremote-rm selftest-noremote
+check_rejected "negative: remove without the fetch remote" "$missing_msg" 1
 
 # --- negative: missing arguments -> usage, exit 2 ---------------------------
 run_add neg-usage direct
