@@ -63,7 +63,7 @@ includes:
 * For `mkdocs:*`, a Python virtual environment at `~/.venvs/docs`, or any other path passed as `PYTHON_VENV_DIR_DOCS` (see [Per-module overrides](#per-module-overrides)).
 * For `pre-commit:*`, a Python virtual environment at `~/.venvs/development`.
 * For `kind:*` and `k8s:*`, the underlying `kind`, `kubectl`, and `helm` binaries on the `PATH`.
-* For `worktree:*`, a `git` repository with an `origin` remote; optionally set `NOLTE_WORKTREE_ROOT` to choose where worktrees land (defaults to `~/repos/.worktrees`).
+* For `worktree:*`, a `git` repository with the remote named by the module's `WORKTREE_FETCH_REMOTE` setting (default `origin`); optionally set `NOLTE_WORKTREE_ROOT` to choose where worktrees land (defaults to `~/repos/.worktrees`).
 * For `asdf:*`, the [asdf](https://asdf-vm.com/) CLI on the `PATH` (written against asdf `v0.19`) with a populated `~/.tool-versions`.
 
 The [nolte/workstation](https://github.com/nolte/workstation) playbook provisions both Python virtual environments. When a venv is missing, the affected task fails the first time it runs—provision it before invoking the task.

@@ -22,8 +22,9 @@ apply across every module.
 
 ## Prerequisites
 
-- `git` on the `PATH`, run from inside a repository that has an `origin`
-  remote. The module derives `<repo>` from `origin`, never from the current
+- `git` on the `PATH`, run from inside a repository that has the remote named
+  by the module's `WORKTREE_FETCH_REMOTE` setting (default `origin`). The
+  module derives `<repo>` from that remote's URL, never from the current
   working directory.
 - Optionally, the `NOLTE_WORKTREE_ROOT` environment variable to choose where
   worktrees land. It wins over the `WORKTREE_ROOT_DEFAULT` variable at
@@ -37,9 +38,10 @@ Every worktree lands in the same predictable place:
 ${NOLTE_WORKTREE_ROOT:-~/repos/.worktrees}/<repo>/<slug>/
 ```
 
-`<repo>` comes from the `origin` remote and `<slug>` is a single
-kebab-case path segment (the branch name with its prefix stripped, unless
-you pass one explicitly).
+`<repo>` comes from the URL of the remote named by `WORKTREE_FETCH_REMOTE`
+(default `origin`), the same remote the module fetches the base ref from, and
+`<slug>` is a single kebab-case path segment (the branch name with its prefix
+stripped, unless you pass one explicitly).
 
 ## Tasks
 
@@ -67,7 +69,7 @@ control.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `WORKTREE_BASE_REF` | `origin/develop` | Ref new branches are cut from. |
-| `WORKTREE_FETCH_REMOTE` | `origin` | Remote fetched before the worktree is created. |
+| `WORKTREE_FETCH_REMOTE` | `origin` | Remote fetched before the worktree is created; `<repo>` comes from its URL. |
 | `WORKTREE_FETCH_BRANCH` | `develop` | Branch fetched before the worktree is created. |
 | `WORKTREE_ALLOWED_PREFIXES` | `feat fix chore docs exp` | Space-separated branch prefixes accepted by `add`. |
 | `WORKTREE_ROOT_DEFAULT` | `~/repos/.worktrees` | Fallback root when `NOLTE_WORKTREE_ROOT` is unset. |
@@ -121,7 +123,37 @@ task worktree:remove -- ci
 
 - **`worktree:add` rejects the branch.** The branch must carry one of the
   prefixes in `WORKTREE_ALLOWED_PREFIXES` (default `feat fix chore docs
-  exp`). The slug may drop the prefix, but the branch must not.
+  exp`). The slug may drop the prefix, but the branch must not. The error
+  names the cause:
+    - `has no prefix`: the branch has no `<prefix>/` segment at all (for
+      example `parser-fix` or a bare `feat`). Pass the full name, such as
+      `feat/parser-fix`.
+    - `lacks an allowed prefix`: the branch has a prefix, but it isn't
+      exactly one of the listed prefixes (for example `wip/parser-fix`, or
+      `fix chore/parser-fix`). Use one of the listed prefixes. Today the list
+      is the module's fixed default: the module declares
+      `WORKTREE_ALLOWED_PREFIXES` as a plain literal, so a value passed at the
+      `includes:` site doesn't change it (see "Per-module overrides" in the
+      repository `README.md`).
+    - `has an empty name after`: the branch is a bare prefix with a
+      trailing slash (for example `feat/`). Add the name after the slash.
+    - `must not contain whitespace`: the quoted branch name holds a blank
+      or a tab (for example `"feat/parser fix"`). Join the words with a
+      dash, such as `feat/parser-fix`.
+    - `is not a valid git branch name`: the name breaks git's ref-name
+      rules (`git check-ref-format`), for example `feat/x~1`,
+      `feat/x.lock`, `feat/x:y`, `feat/a..b` or a trailing slash as in
+      `feat/x/`. `add` stops before the fetch. Drop the offending
+      characters, such as `feat/x-1`.
+- **`✖ Slug '<slug>' must be a single kebab-case path segment.`** The slug
+  names one directory under `<root>/<repo>/`, so `add` and `remove` reject a
+  slug with a `/` or `..`, a leading `.` or `-`, and the bare `.` (which
+  would make `<root>/<repo>` itself the worktree). Pass a plain name, such
+  as `parser-fix`.
+- **`✖ Not inside a git repository: <dir>`.** `add` and `remove` derive
+  `<repo>` from the current checkout, so they stop before any fetch or
+  filesystem write when the working directory belongs to no repository.
+  Change into a clone of the repository and retry.
 - **`worktree:remove` fails without `force`.** `git worktree remove`
   refuses to drop a worktree with uncommitted or untracked files, and the
   seeded `.resume/<slug>/plan.md` counts as untracked unless the consumer
@@ -130,6 +162,19 @@ task worktree:remove -- ci
 - **The worktree landed in the wrong place.** The root is
   `NOLTE_WORKTREE_ROOT` if set, otherwise `WORKTREE_ROOT_DEFAULT`. Run
   `task worktree:root` to see the resolved value for the current machine.
-- **`origin` not found.** The module derives `<repo>` from the `origin`
-  remote. Add one (`git remote add origin …`) or run inside a clone that
-  already has it.
+- **`✖ No remote '<name>' to derive <repo> from (WORKTREE_FETCH_REMOTE).`**
+  `add` and `remove` derive `<repo>` from the remote named by the module's
+  `WORKTREE_FETCH_REMOTE` setting (default `origin`) and stop before any
+  fetch or filesystem write when the repository lacks it. The message lists
+  the existing remotes. Add the missing remote (`git remote add <name> <url>`)
+  or run inside a clone that already has it. Today `WORKTREE_FETCH_REMOTE`
+  is the module's fixed default: the module declares it as a plain literal,
+  so a value passed at the `includes:` site doesn't change it (see #57).
+- **`✖ Cannot derive <repo> from URL '<url>' of remote '<name>'.`**
+  `<repo>` is the last segment of the remote URL: the module strips any
+  trailing `/`, takes the part after the last `/` or `:`, and drops a `.git`
+  suffix, so `git@host:org/repo.git`, `git@host:repo.git` and
+  `https://host/repo/` all yield `repo`. When nothing usable remains (for
+  example a remote URL of `.`), `add` and `remove` stop before any fetch or
+  filesystem write. Point the remote at a URL that names the repository
+  (`git remote set-url`).

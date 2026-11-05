@@ -70,32 +70,67 @@ tasks:
 
         [ -n "$branch" ] || usage
 
+        # reject <message> [hint]: print a branch-rule violation, plus the
+        # case-specific hint when one is given, and abort.
+        reject() {
+          echo "✖ $1" >&2
+          if [ -n "${2:-}" ]; then
+            echo "  $2" >&2
+          fi
+          exit 1
+        }
+        slug_hint="The path slug may drop the prefix, but the branch MUST NOT."
+
         # Branch-prefix rule (branching-model). The slug may drop the prefix,
         # but the branch MUST carry one of the allowed prefixes.
+        # NOTE: no bare `a && b` list on purpose. The embedded shell (mvdan/sh,
+        # as shipped with go-task) lets a false `&&`/`||` list that ends a
+        # compound command — such as a loop body — leak out as its exit status
+        # and abort under `set -e`; bash exempts it (#50). `if`/`case` never
+        # leak, so the loop below sets a flag from a `case` only.
         prefix="${branch%%/*}"
-        ok=0
-        # NOTE: the loop body is deliberately an `if`, not a bare `a && b && c`
-        # list. The embedded shell (mvdan/sh, as shipped with go-task) lets a
-        # false `&&` list in the final iteration leak out as the loop's exit
-        # status and aborts under `set -e` — bash exempts it — so every prefix
-        # except the last allowed one failed silently.
-        for p in $allowed_prefixes; do
-          if [ "$prefix" = "$p" ] && [ "$prefix" != "$branch" ]; then
-            ok=1
-          fi
+        if [ "$prefix" = "$branch" ] || [ -z "$prefix" ]; then
+          reject "Branch '$branch' has no prefix; expected <prefix>/<name> with one of: ${allowed_prefixes}." "$slug_hint"
+        fi
+        # Exact token match against the IFS-split list (spaces, tabs, newlines
+        # all separate) — never a substring match on the joined string.
+        prefix_ok=0
+        for allowed_prefix in $allowed_prefixes; do
+          case "$prefix" in
+            "$allowed_prefix") prefix_ok=1 ;;
+          esac
         done
-        if [ "$ok" -ne 1 ]; then
-          echo "✖ Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." >&2
-          echo "  The path slug may drop the prefix, but the branch MUST NOT." >&2
-          exit 1
+        if [ "$prefix_ok" -ne 1 ]; then
+          reject "Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." "$slug_hint"
+        fi
+        if [ -z "${branch#*/}" ]; then
+          reject "Branch '$branch' has an empty name after '${prefix}/'; expected <prefix>/<name>." \
+            "Add the name after the slash, e.g. ${prefix}/parser-fix."
+        fi
+        case "$branch" in
+          *[[:space:]]*)
+            reject "Branch '$branch' must not contain whitespace." \
+              "Join the words with a dash instead, e.g. ${prefix}/parser-fix."
+            ;;
+        esac
+        # Git's own ref-name rules, checked last so the specific messages above
+        # win. `refs/heads/<branch>` instead of `--branch`: no repository is
+        # needed and `@{-N}` is never expanded to a previous branch. Catches
+        # `..`, `~`, `^`, `:`, a trailing `/` or `.lock`, and the like before
+        # the banner, the fetch, or `git worktree add`.
+        if ! git check-ref-format "refs/heads/$branch"; then
+          reject "Branch '$branch' is not a valid git branch name." \
+            "Avoid '..', '~', '^', ':', '?', '*', '[', '@{', a trailing '/' or '.lock'; see git check-ref-format."
         fi
 
         # Default slug: branch name minus the prefix segment.
         [ -n "$slug" ] || slug="${branch#*/}"
 
-        # A slug MUST be a single path segment — never a traversal or nested path.
+        # A slug MUST be a single path segment — never a traversal, a nested
+        # path, `.` (the <repo> directory itself), a hidden name, or an
+        # option-like leading dash.
         case "$slug" in
-          */*|*..*|"")
+          */*|*..*|.*|-*|"")
             echo "✖ Slug '$slug' must be a single kebab-case path segment." >&2
             exit 1
             ;;
@@ -109,9 +144,70 @@ tasks:
           "~/"*) root="$HOME/${root#\~/}" ;;
         esac
 
-        # Derive <repo> from the origin remote — never inferred from the cwd.
-        origin_url="$(git remote get-url origin)"
-        repo="$(basename "$origin_url" .git)"
+        # Derive <repo> from the fetch remote — the same remote the base ref is
+        # fetched from, never inferred from the cwd and never a hard-coded
+        # `origin`. Every git call sits inside an `if` so a failure cannot
+        # abort silently under `set -e`/`pipefail` (#50); each one reports
+        # before any fetch or write.
+        # KEEP IN SYNC: `add` and `remove` share the logic from here to the
+        # `<repo>` sanity check (repository check, remote lookup, URL
+        # normalisation), so both resolve the same <root>/<repo>/<slug>. Only
+        # the hint lines of the messages differ between the two tasks.
+        if ! git rev-parse --git-dir >/dev/null 2>&1; then
+          echo "✖ Not inside a git repository: $PWD" >&2
+          echo "  Run the task from a checkout of the repository to branch off." >&2
+          exit 1
+        fi
+        if ! remote_list="$(git remote)"; then
+          echo "✖ Cannot list the remotes of the repository at: $PWD" >&2
+          exit 1
+        fi
+        remote_found=0
+        remotes=""
+        for remote_name in $remote_list; do
+          case "$remote_name" in
+            "$fetch_remote") remote_found=1 ;;
+          esac
+          remotes="${remotes:+$remotes }$remote_name"
+        done
+        if [ "$remote_found" -ne 1 ]; then
+          if [ -z "$remotes" ]; then
+            remotes="(none)"
+          fi
+          echo "✖ No remote '${fetch_remote}' to derive <repo> from (WORKTREE_FETCH_REMOTE)." >&2
+          echo "  Existing remotes: ${remotes}" >&2
+          echo "  Add it, then retry: git remote add ${fetch_remote} <url>" >&2
+          echo "  WORKTREE_FETCH_REMOTE is the module's fixed default today; an" >&2
+          echo "  includes:-site override is not honoured yet (nolte/taskfiles#57)." >&2
+          exit 1
+        fi
+        # The remote exists, so any failure here is unexpected: git's own
+        # stderr stays visible above the message.
+        if ! fetch_url="$(git remote get-url "$fetch_remote")"; then
+          echo "✖ Cannot read the URL of remote '${fetch_remote}' (see git's message above)." >&2
+          exit 1
+        fi
+        # Normalise the fetch URL to <repo>: strip trailing slashes, keep the
+        # part after the last `/` or `:` (scp-style `git@host:repo.git` has no
+        # slash), strip `.git`. A result that is not a usable directory name
+        # stops before any fetch or write.
+        repo="$fetch_url"
+        while :; do
+          case "$repo" in
+            */) repo="${repo%/}" ;;
+            *) break ;;
+          esac
+        done
+        repo="${repo##*/}"
+        repo="${repo##*:}"
+        repo="${repo%.git}"
+        case "$repo" in
+          ""|.|..)
+            echo "✖ Cannot derive <repo> from URL '${fetch_url}' of remote '${fetch_remote}'." >&2
+            echo "  Point the remote at a URL whose last path segment names the repository." >&2
+            exit 1
+            ;;
+        esac
 
         dest="$root/$repo/$slug"
         if [ -e "$dest" ]; then
@@ -222,6 +318,7 @@ tasks:
         set -euo pipefail
 
         root_default="{{.WORKTREE_ROOT_DEFAULT}}"
+        fetch_remote="{{.WORKTREE_FETCH_REMOTE}}"
 
         set -- {{.CLI_ARGS}}
         slug="${1:-}"
@@ -232,8 +329,9 @@ tasks:
           exit 2
         fi
 
+        # Same slug rule as `add`: `.` would resolve to the <repo> directory.
         case "$slug" in
-          */*|*..*) echo "✖ Slug '$slug' must be a single path segment." >&2; exit 1 ;;
+          */*|*..*|.*|-*) echo "✖ Slug '$slug' must be a single path segment." >&2; exit 1 ;;
         esac
 
         root="${NOLTE_WORKTREE_ROOT:-$root_default}"
@@ -242,8 +340,66 @@ tasks:
           "~/"*) root="$HOME/${root#\~/}" ;;
         esac
 
-        origin_url="$(git remote get-url origin)"
-        repo="$(basename "$origin_url" .git)"
+        # Same <repo> derivation as `add`: the fetch remote, reported if missing.
+        # KEEP IN SYNC: `add` and `remove` share the logic from here to the
+        # `<repo>` sanity check (repository check, remote lookup, URL
+        # normalisation), so both resolve the same <root>/<repo>/<slug>. Only
+        # the hint lines of the messages differ between the two tasks.
+        if ! git rev-parse --git-dir >/dev/null 2>&1; then
+          echo "✖ Not inside a git repository: $PWD" >&2
+          echo "  Run the task from a checkout of the repository the worktree belongs to." >&2
+          exit 1
+        fi
+        if ! remote_list="$(git remote)"; then
+          echo "✖ Cannot list the remotes of the repository at: $PWD" >&2
+          exit 1
+        fi
+        remote_found=0
+        remotes=""
+        for remote_name in $remote_list; do
+          case "$remote_name" in
+            "$fetch_remote") remote_found=1 ;;
+          esac
+          remotes="${remotes:+$remotes }$remote_name"
+        done
+        if [ "$remote_found" -ne 1 ]; then
+          if [ -z "$remotes" ]; then
+            remotes="(none)"
+          fi
+          echo "✖ No remote '${fetch_remote}' to derive <repo> from (WORKTREE_FETCH_REMOTE)." >&2
+          echo "  Existing remotes: ${remotes}" >&2
+          echo "  Add it (the remote the worktree was added with), then retry: git remote add ${fetch_remote} <url>" >&2
+          echo "  WORKTREE_FETCH_REMOTE is the module's fixed default today; an" >&2
+          echo "  includes:-site override is not honoured yet (nolte/taskfiles#57)." >&2
+          exit 1
+        fi
+        # The remote exists, so any failure here is unexpected: git's own
+        # stderr stays visible above the message.
+        if ! fetch_url="$(git remote get-url "$fetch_remote")"; then
+          echo "✖ Cannot read the URL of remote '${fetch_remote}' (see git's message above)." >&2
+          exit 1
+        fi
+        # Normalise the fetch URL to <repo>: strip trailing slashes, keep the
+        # part after the last `/` or `:` (scp-style `git@host:repo.git` has no
+        # slash), strip `.git`. A result that is not a usable directory name
+        # stops before any fetch or write.
+        repo="$fetch_url"
+        while :; do
+          case "$repo" in
+            */) repo="${repo%/}" ;;
+            *) break ;;
+          esac
+        done
+        repo="${repo##*/}"
+        repo="${repo##*:}"
+        repo="${repo%.git}"
+        case "$repo" in
+          ""|.|..)
+            echo "✖ Cannot derive <repo> from URL '${fetch_url}' of remote '${fetch_remote}'." >&2
+            echo "  Point the remote at a URL whose last path segment names the repository." >&2
+            exit 1
+            ;;
+        esac
         dest="$root/$repo/$slug"
 
         if [ ! -e "$dest" ]; then
