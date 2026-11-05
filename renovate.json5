@@ -2,5 +2,18 @@
     "extends": [
       "github>nolte/gh-plumbing//renovate-configs/common#v2.2.0",
       "group:all"
+    ],
+    "customManagers": [
+      {
+        "customType": "regex",
+        "description": "Age the exact go-task pin passed to go-task/setup-task. Renovate's github-actions manager ages the action digest but does not extract the action's version input, so without this manager the go-task version never moves. The match is anchored to the setup-task uses line and its with block, so no other version input in a workflow is picked up.",
+        "managerFilePatterns": ["/(^|/)\\.github/workflows/[^/]+\\.ya?ml$/"],
+        "matchStrings": [
+          "uses:[ \\t]+go-task/setup-task@[0-9a-f]{40}[^\\n]*\\n[ \\t]+with:[ \\t]*\\n(?:[ \\t]+[\\w-]+:[^\\n]*\\n)*?[ \\t]+version:[ \\t]+[\"']?(?<currentValue>\\d+\\.\\d+\\.\\d+)[\"']?[ \\t]*(?:\\n|$)"
+        ],
+        "depNameTemplate": "go-task/task",
+        "datasourceTemplate": "github-releases",
+        "extractVersionTemplate": "^v(?<version>.+)$"
+      }
     ]
   }
