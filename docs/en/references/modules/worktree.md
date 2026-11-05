@@ -39,7 +39,7 @@ ${NOLTE_WORKTREE_ROOT:-~/repos/.worktrees}/<repo>/<slug>/
 ```
 
 `<repo>` comes from the URL of the remote named by `WORKTREE_FETCH_REMOTE`
-(default `origin`), the same remote the base ref is fetched from, and
+(default `origin`), the same remote the module fetches the base ref from, and
 `<slug>` is a single kebab-case path segment (the branch name with its prefix
 stripped, unless you pass one explicitly).
 
@@ -69,7 +69,7 @@ control.
 | Variable | Default | Purpose |
 |----------|---------|---------|
 | `WORKTREE_BASE_REF` | `origin/develop` | Ref new branches are cut from. |
-| `WORKTREE_FETCH_REMOTE` | `origin` | Remote fetched before the worktree is created; `<repo>` is derived from its URL. |
+| `WORKTREE_FETCH_REMOTE` | `origin` | Remote fetched before the worktree is created; `<repo>` comes from its URL. |
 | `WORKTREE_FETCH_BRANCH` | `develop` | Branch fetched before the worktree is created. |
 | `WORKTREE_ALLOWED_PREFIXES` | `feat fix chore docs exp` | Space-separated branch prefixes accepted by `add`. |
 | `WORKTREE_ROOT_DEFAULT` | `~/repos/.worktrees` | Fallback root when `NOLTE_WORKTREE_ROOT` is unset. |
@@ -125,19 +125,19 @@ task worktree:remove -- ci
   prefixes in `WORKTREE_ALLOWED_PREFIXES` (default `feat fix chore docs
   exp`). The slug may drop the prefix, but the branch must not. The error
   names the cause:
-    - `has no prefix` — the branch has no `<prefix>/` segment at all (for
+    - `has no prefix`: the branch has no `<prefix>/` segment at all (for
       example `parser-fix` or a bare `feat`). Pass the full name, such as
       `feat/parser-fix`.
-    - `lacks an allowed prefix` — the branch has a prefix, but it isn't
+    - `lacks an allowed prefix`: the branch has a prefix, but it isn't
       exactly one of the listed prefixes (for example `wip/parser-fix`, or
       `fix chore/parser-fix`). Use one of the listed prefixes. Today the list
       is the module's fixed default: the module declares
       `WORKTREE_ALLOWED_PREFIXES` as a plain literal, so a value passed at the
       `includes:` site doesn't change it (see "Per-module overrides" in the
       repository `README.md`).
-    - `has an empty name after` — the branch is a bare prefix with a
+    - `has an empty name after`: the branch is a bare prefix with a
       trailing slash (for example `feat/`). Add the name after the slash.
-    - `must not contain whitespace` — the quoted branch name holds a blank
+    - `must not contain whitespace`: the quoted branch name holds a blank
       or a tab (for example `"feat/parser fix"`). Join the words with a
       dash, such as `feat/parser-fix`.
 - **`worktree:remove` fails without `force`.** `git worktree remove`
@@ -157,9 +157,10 @@ task worktree:remove -- ci
   is the module's fixed default: the module declares it as a plain literal,
   so a value passed at the `includes:` site doesn't change it (see #57).
 - **`✖ Cannot derive <repo> from URL '<url>' of remote '<name>'.`**
-  `<repo>` is the last segment of the remote URL, after any trailing `/` is
-  stripped and taken after the last `/` or `:`, minus a `.git` suffix — so
-  `git@host:org/repo.git`, `git@host:repo.git` and `https://host/repo/` all
-  yield `repo`. When nothing usable is left (for example a remote URL of
-  `.`), `add` and `remove` stop before any fetch or filesystem write. Point
-  the remote at a URL that names the repository (`git remote set-url`).
+  `<repo>` is the last segment of the remote URL: the module strips any
+  trailing `/`, takes the part after the last `/` or `:`, and drops a `.git`
+  suffix, so `git@host:org/repo.git`, `git@host:repo.git` and
+  `https://host/repo/` all yield `repo`. When nothing usable remains (for
+  example a remote URL of `.`), `add` and `remove` stop before any fetch or
+  filesystem write. Point the remote at a URL that names the repository
+  (`git remote set-url`).
