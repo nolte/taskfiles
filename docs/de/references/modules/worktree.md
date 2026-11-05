@@ -130,8 +130,15 @@ task worktree:remove -- ci
       (etwa `parser-fix` oder ein nacktes `feat`). Den vollen Namen angeben,
       etwa `feat/parser-fix`.
     - `lacks an allowed prefix` — der Branch hat einen Prefix, der aber nicht
-      in `WORKTREE_ALLOWED_PREFIXES` steht (etwa `wip/parser-fix`). Einen
-      erlaubten Prefix verwenden oder `WORKTREE_ALLOWED_PREFIXES` erweitern.
+      exakt einem der gelisteten Prefixes entspricht (etwa `wip/parser-fix`
+      oder `fix chore/parser-fix`). Einen der gelisteten Prefixes verwenden.
+      Die Liste ist derzeit der feste Default des Moduls: Das Modul deklariert
+      `WORKTREE_ALLOWED_PREFIXES` als einfaches Literal, sodass ein am
+      `includes:`-Eintrag übergebener Wert sie nicht ändert (siehe
+      „Per-module overrides" in der `README.md` des Repositorys).
+    - `has an empty name after` — der Branch ist ein nackter Prefix mit
+      abschließendem Schrägstrich (etwa `feat/`). Den Namen nach dem
+      Schrägstrich ergänzen.
 - **`worktree:remove` scheitert ohne `force`.** `git worktree remove`
   weigert sich, einen Worktree mit nicht committeten oder untracked Dateien
   zu entfernen — und der angelegte `.resume/<slug>/plan.md` zählt als

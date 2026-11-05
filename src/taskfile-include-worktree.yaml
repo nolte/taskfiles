@@ -70,25 +70,41 @@ tasks:
 
         [ -n "$branch" ] || usage
 
-        # Branch-prefix rule (branching-model). The slug may drop the prefix,
-        # but the branch MUST carry one of the allowed prefixes.
-        prefix="${branch%%/*}"
-        # NOTE: no loop and no bare `a && b` list on purpose. The embedded
-        # shell (mvdan/sh, as shipped with go-task) lets a false `&&`/`||` list
-        # that ends a compound command leak out as its exit status and aborts
-        # under `set -e` — bash exempts it (#50). `if`/`case` never leak.
-        if [ "$prefix" = "$branch" ] || [ -z "$prefix" ]; then
-          echo "✖ Branch '$branch' has no prefix; expected <prefix>/<name> with one of: ${allowed_prefixes}." >&2
+        # reject <message>: print a branch-rule violation plus the shared hint
+        # and abort.
+        reject() {
+          echo "✖ $1" >&2
           echo "  The path slug may drop the prefix, but the branch MUST NOT." >&2
           exit 1
+        }
+
+        # Branch-prefix rule (branching-model). The slug may drop the prefix,
+        # but the branch MUST carry one of the allowed prefixes.
+        # NOTE: no bare `a && b` list on purpose. The embedded shell (mvdan/sh,
+        # as shipped with go-task) lets a false `&&`/`||` list that ends a
+        # compound command — such as a loop body — leak out as its exit status
+        # and abort under `set -e`; bash exempts it (#50). `if`/`case` never
+        # leak, so the loop below sets a flag from a `case` only.
+        prefix="${branch%%/*}"
+        if [ "$prefix" = "$branch" ] || [ -z "$prefix" ]; then
+          reject "Branch '$branch' has no prefix; expected <prefix>/<name> with one of: ${allowed_prefixes}."
         fi
-        case " $allowed_prefixes " in
-          *" $prefix "*) ;;
-          *)
-            echo "✖ Branch '$branch' lacks an allowed prefix (${allowed_prefixes})." >&2
-            echo "  The path slug may drop the prefix, but the branch MUST NOT." >&2
-            exit 1
-            ;;
+        # Exact token match against the IFS-split list (spaces, tabs, newlines
+        # all separate) — never a substring match on the joined string.
+        prefix_ok=0
+        for allowed_prefix in $allowed_prefixes; do
+          case "$prefix" in
+            "$allowed_prefix") prefix_ok=1 ;;
+          esac
+        done
+        if [ "$prefix_ok" -ne 1 ]; then
+          reject "Branch '$branch' lacks an allowed prefix (${allowed_prefixes})."
+        fi
+        if [ -z "${branch#*/}" ]; then
+          reject "Branch '$branch' has an empty name after '${prefix}/'; expected <prefix>/<name>."
+        fi
+        case "$branch" in
+          *[[:space:]]*) reject "Branch '$branch' must not contain whitespace." ;;
         esac
 
         # Default slug: branch name minus the prefix segment.

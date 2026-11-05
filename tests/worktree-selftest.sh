@@ -3,8 +3,8 @@
 #
 # Exercises `worktree:add` against a throwaway origin/clone pair for every
 # branch prefix the module allows, plus negative cases that must be rejected
-# (missing/unknown prefix, unsafe slug, existing destination, missing
-# arguments). The module is driven both directly (`task -t <module> add`) and
+# (missing/unknown/substring prefix, empty branch name, unsafe slug, existing
+# destination, missing arguments). The module is driven both directly (`task -t <module> add`) and
 # through a consumer-style Taskfile that includes it (`task worktree:add`).
 #
 # The prefix list is the value Task itself resolves for
@@ -91,7 +91,8 @@ report() { # <status> <case> [detail]
 
 # run_add <root-id> <direct|consumer> [args...]: runs `worktree:add` in the
 # clone with the worktree root $work/roots/<root-id> (reused across calls with
-# the same id). `task -x` passes the script's own exit status through instead
+# the same id). The module under test is $run_module when set, else $module.
+# `task -x` passes the script's own exit status through instead
 # of go-task's generic 201. Sets rc, out, err, root.
 runs=0
 run_add() {
@@ -107,7 +108,7 @@ run_add() {
       task -x worktree:add -- "$@" >"$log.out" 2>"$log.err" </dev/null)
   else
     (cd "$work/clone" && NOLTE_WORKTREE_ROOT="$root" \
-      task -x -t "$module" add -- "$@" >"$log.out" 2>"$log.err" </dev/null)
+      task -x -t "${run_module:-$module}" add -- "$@" >"$log.out" 2>"$log.err" </dev/null)
   fi
   rc=$?
   set -e
@@ -146,6 +147,21 @@ check_rejected() {
   fi
 }
 
+# check_untouched <case>: asserts the last run_add left its worktree root
+# empty and never printed the pre-fetch banner, i.e. it was rejected before
+# any fetch or `git worktree add`.
+check_untouched() {
+  if [ -n "$(ls -A "$root")" ]; then
+    report FAIL "$1" "worktree root not empty: $(ls -A "$root" | tr '\n' ' ')"
+  elif [[ "$out" == *"→ Worktree root"* ]]; then
+    report FAIL "$1" "reached the fetch stage ('→ Worktree root' printed)"
+  elif [[ "$err" == *fatal:* || "$err" == *"Could not"* ]]; then
+    report FAIL "$1" "git/fetch output on stderr: $err"
+  else
+    report PASS "$1"
+  fi
+}
+
 # --- positive: every allowed prefix, directly and via the consumer wrapper --
 i=0
 for p in "${prefixes[@]}"; do
@@ -175,6 +191,30 @@ check_rejected "negative: nope/selftest (unknown prefix)" "lacks an allowed pref
 run_add neg-consumer consumer nope/selftest
 check_rejected "negative (consumer): nope/selftest (unknown prefix)" "lacks an allowed prefix"
 
+# Substring of the joined list, not a single allowed token: "fix chore" sits
+# inside "feat fix chore docs exp" but must not pass the gate.
+if [ "${#prefixes[@]}" -ge 3 ]; then
+  sub="${prefixes[1]} ${prefixes[2]}/selftest"
+elif [ "${#prefixes[@]}" -ge 2 ]; then
+  sub="${prefixes[0]} ${prefixes[1]}/selftest"
+else
+  sub=""
+fi
+if [ -n "$sub" ]; then
+  run_add neg-substring direct "$sub"
+  check_rejected "negative: '$sub' (substring prefix)" "lacks an allowed prefix" 1
+  check_untouched "negative: '$sub' creates nothing"
+fi
+
+# --- negative: empty branch name after the prefix ---------------------------
+run_add neg-emptyname direct "${prefixes[0]}/"
+check_rejected "negative: ${prefixes[0]}/ (empty name)" "has an empty name after" 1
+check_untouched "negative: ${prefixes[0]}/ rejected before fetch"
+
+run_add neg-emptyname-slug direct "${prefixes[0]}/" custom-slug
+check_rejected "negative: ${prefixes[0]}/ custom-slug (empty name)" "has an empty name after" 1
+check_untouched "negative: ${prefixes[0]}/ custom-slug rejected before fetch"
+
 # --- negative: unsafe slug --------------------------------------------------
 i=0
 for slug in a/b ..x; do
@@ -192,6 +232,31 @@ if [ "$rc" -ne 0 ]; then
 else
   run_add neg-exists direct "${prefixes[0]}/selftest-exists"
   check_rejected "negative: destination exists" "Destination already exists"
+fi
+
+# --- positive: whitespace-padded, tab-separated prefix list -----------------
+# A copy of the module whose WORKTREE_ALLOWED_PREFIXES literal is rewritten to
+# a padded, tab/multi-space separated form of the same list: the gate splits
+# on any IFS whitespace, so every token must still match exactly.
+if [ "${#prefixes[@]}" -ge 2 ]; then
+  tab=$'\t'
+  padded="  ${prefixes[0]}"
+  for p in "${prefixes[@]:1}"; do padded="$padded$tab  $p"; done
+  padded="$padded  "
+  ws_module="$work/module-ws.yaml"
+  sed "s|^\([[:space:]]*WORKTREE_ALLOWED_PREFIXES:\).*|\1 \"$padded\"|" "$module" >"$ws_module"
+  if cmp -s "$module" "$ws_module"; then
+    report FAIL "positive (padded list): setup" "no WORKTREE_ALLOWED_PREFIXES line to rewrite in $module"
+  else
+    i=0
+    for p in "${prefixes[1]}" "${prefixes[${#prefixes[@]} - 1]}"; do
+      i=$((i + 1))
+      run_module="$ws_module" run_add "pos-ws-$i" direct "$p/selftest-ws-$i"
+      check_created "positive (padded list): $p/selftest-ws-$i" "selftest-ws-$i"
+    done
+    run_module="$ws_module" run_add neg-ws direct nope/selftest-ws
+    check_rejected "negative (padded list): nope/selftest-ws" "lacks an allowed prefix" 1
+  fi
 fi
 
 # --- negative: missing arguments -> usage, exit 2 ---------------------------
