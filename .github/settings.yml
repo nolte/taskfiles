@@ -13,12 +13,14 @@ repository:
 # expects each consumer to declare its own:
 #   - "static / Static CI Tests": job `static` in build-static-tests.yaml,
 #     which calls the gh-plumbing reusable pre-commit workflow.
-#   - "task test": job `test` (named "task test") in ci.yml, which runs the
-#     repository's own `task test` self-tests.
-# The entry repeats every commons field verbatim on purpose: the current
-# Settings app source (probot 14) drops its `arrayMerge` option, so arrays from
-# `_extends` are concatenated, not merged by name, and this entry is applied
-# as a complete branch-protection payload of its own. Never drop a field here.
+#   - "task test": job `test` (named "task test") in ci.yml.
+# The Settings app source passes `arrayMerge`, but probot 14's
+# @fastify/deepmerge only honours `mergeArray`, so `_extends` arrays are
+# concatenated and the commons master/develop entries are PUT as well. Whether
+# the hosted app runs that code is unverified (nolte/gh-plumbing#442).
+# Those commons entries set `restrictions.apps`, which GitHub accepts only on
+# organization-owned repos, so they are expected to fail here. This entry sets
+# `restrictions: null` and repeats every other field as a complete payload.
 branches:
   - name: develop
     protection:
@@ -29,8 +31,4 @@ branches:
           - "static / Static CI Tests"
           - "task test"
       enforce_admins: true
-      restrictions:
-        users: []
-        teams: []
-        apps:
-          - nolte-portfolio-app
+      restrictions: null

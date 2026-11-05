@@ -5,7 +5,7 @@ on:
   push:
     branches: [develop]
 
-# Least-privilege default, per spec/project/github-actions-best-practices/ §B.
+# Least-privilege default, per nolte/claude-shared:spec/project/github-actions-best-practices/ §B.
 permissions:
   contents: read
 
@@ -15,7 +15,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
-# Stages of spec/project/continuous-integration/ §A deliberately absent here:
+# Stages of nolte/claude-shared:spec/project/continuous-integration/ §A deliberately absent here:
 #   - lint: pre-commit already runs via build-static-tests.yaml (static / Static CI Tests).
 #   - build/package: this repository ships no build artifact; the YAML files are the product.
 #   - supply-chain scan: trivy and chain-bench run via build-static-tests.yaml.
@@ -23,7 +23,7 @@ jobs:
   test:
     name: task test
     # Versioned label, not ubuntu-latest: the self-test depends on the image's
-    # git and bash (spec/project/continuous-integration/ §C, no floating refs).
+    # git and bash (nolte/claude-shared:spec/project/continuous-integration/ §C, no floating refs).
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -42,6 +42,6 @@ jobs:
         with:
           version: 3.52.0
 
-      # Same target a contributor runs locally (spec/project/taskfile/ §Local and CI parity).
+      # Same target a contributor runs locally (nolte/claude-shared:spec/project/taskfile/ §Local and CI parity).
       - name: Run the self-tests
         run: task test
